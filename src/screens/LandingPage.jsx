@@ -127,13 +127,13 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     backgroundImageStyle: {
-        opacity: 0.4,
+        opacity: 1,
         resizeMode: 'cover',
         justifyContent: 'center',
     },
     container: {
         flex: 1,
-        backgroundColor: 'rgba(82, 109, 130, 0.5)',
+        backgroundColor: 'rgba(82, 109, 130, 0.1)',
         alignItems: 'center',
         justifyContent: 'center',
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
