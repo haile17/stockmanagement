@@ -102,14 +102,14 @@ const RecordPopup = ({
 
   const renderInventoryItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.dropdownItem}
-      onPress={() => onSelectItem(item, formType)}
-    >
-      <Text style={styles.dropdownItemName}>{item.name}</Text>
-      <Text style={styles.dropdownItemDetails}>
-        Qty: {item.quantity} cartons - {item.quantityPerCarton} pcs/carton - ETB{item.pricePerPiece}/pc
-      </Text>
-    </TouchableOpacity>
+    style={styles.dropdownItem}
+    onPress={() => onSelectItem(item, formType)}
+  >
+    <Text style={styles.dropdownItemName}>{item.itemName}</Text>  
+    <Text style={styles.dropdownItemDetails}>
+      Qty: {item.cartonQuantity} cartons - {item.quantityPerCarton} pcs/carton - ETB{item.pricePerPiece}/pc
+    </Text>
+  </TouchableOpacity>
   );
 
   const handleFieldChange = (field, value) => {
@@ -233,7 +233,7 @@ const RecordPopup = ({
             {selectedItem && (formType === 'sale' || formType === 'credit') && (
               <View style={styles.selectedItemInfo}>
                 <Text style={styles.selectedItemText}>
-                  Selected: {selectedItem.name} (Available: {selectedItem.quantity} cartons)
+                  Selected: {selectedItem.itemName} (Available: {selectedItem.cartonQuantity} cartons)  {/* Changed both properties */}
                 </Text>
                 <Text style={styles.selectedItemSubText}>
                   {selectedItem.quantityPerCarton} pieces per carton - Original Price: ETB{selectedItem.pricePerPiece}/piece
@@ -290,16 +290,16 @@ const RecordPopup = ({
                        showsVerticalScrollIndicator={true}
                      >
                        {filteredInventory.map((item, index) => (
-                         <TouchableOpacity
-                           key={`${item.name}-${index}`}
-                           style={styles.dropdownItem}
-                           onPress={() => onSelectItem(item, formType)}
-                         >
-                           <Text style={styles.dropdownItemName}>{item.name}</Text>
-                           <Text style={styles.dropdownItemDetails}>
-                             Qty: {item.quantity} cartons - {item.quantityPerCarton} pcs/carton - ETB{item.pricePerPiece}/pc
-                           </Text>
-                         </TouchableOpacity>
+                          <TouchableOpacity
+                            key={`${item.itemName}-${index}`}  // Changed from item.name
+                            style={styles.dropdownItem}
+                            onPress={() => onSelectItem(item, formType)}
+                          >
+                            <Text style={styles.dropdownItemName}>{item.itemName}</Text>  {/* Changed from item.name */}
+                            <Text style={styles.dropdownItemDetails}>
+                              Qty: {item.cartonQuantity} cartons - {item.quantityPerCarton} pcs/carton - ETB{item.pricePerPiece}/pc
+                            </Text>
+                          </TouchableOpacity>
                        ))}
                      </ScrollView>
                    </View>

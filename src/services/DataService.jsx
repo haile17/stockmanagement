@@ -54,14 +54,33 @@ export const DataService = {
   },
 
   getInventory: async () => {
+  try {
     const selectedDatabase = JSON.parse(await AsyncStorage.getItem('selectedInventoryDatabase'));
     const inventoryJson = await AsyncStorage.getItem(INVENTORY_KEY);
     const inventory = inventoryJson ? JSON.parse(inventoryJson) : [];
 
-    return selectedDatabase
+    const filteredInventory = selectedDatabase
       ? inventory.filter((item) => item.databaseId === selectedDatabase.id)
       : inventory;
-  },
+    
+    // Ensure all items have required properties with defaults
+    return filteredInventory.map(item => ({
+      ...item,
+      itemName: item.itemName || '',
+      cartonQuantity: item.cartonQuantity || 0,
+      quantityPerCarton: item.quantityPerCarton || 0,
+      totalQuantity: item.totalQuantity || (item.cartonQuantity || 0) * (item.quantityPerCarton || 0),
+      pricePerPiece: item.pricePerPiece || 0,
+      pricePerCarton: item.pricePerCarton || 0,
+      purchasePricePerPiece: item.purchasePricePerPiece || 0,
+      purchasePricePerCarton: item.purchasePricePerCarton || 0,
+      source: item.source || 'Unknown'
+    }));
+  } catch (error) {
+    console.error('Error getting inventory:', error);
+    return [];
+  }
+},
 
   updateInventoryItem: async (itemName, updatedItem) => {
     const selectedDatabase = JSON.parse(await AsyncStorage.getItem('selectedInventoryDatabase'));
@@ -246,6 +265,7 @@ export const DataService = {
   },
 
   savePurchase: async (purchase) => {
+  try {
     const selectedDatabase = JSON.parse(await AsyncStorage.getItem('selectedInventoryDatabase'));
     const purchases = await DataService.getPurchases();
 
@@ -259,7 +279,7 @@ export const DataService = {
     purchases.push(newPurchase);
     await AsyncStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
 
-    // Update inventory
+    // Update inventory with proper error handling
     const inventoryItem = {
       itemName: purchase.itemName,
       cartonQuantity: purchase.cartonQuantity || 0,
@@ -276,7 +296,11 @@ export const DataService = {
 
     await DataService.saveInventoryItem(inventoryItem);
     return newPurchase;
-  },
+  } catch (error) {
+    console.error('Error saving purchase:', error);
+    throw error;
+  }
+},
 
   deletePurchase: async (purchaseId) => {
     try {
@@ -477,7 +501,21 @@ export const DataService = {
     const updatedInventory = inventory.filter((item) => item.databaseId !== databaseId);
     await AsyncStorage.setItem(INVENTORY_KEY, JSON.stringify(updatedInventory));
     return updatedInventory;
-  }
-};
+  },
 
+validateInventoryItem: (item) => {
+  const required = ['itemName', 'cartonQuantity', 'quantityPerCarton', 'pricePerPiece'];
+  const missing = required.filter(field => !item[field] && item[field] !== 0);
+  
+  if (missing.length > 0) {
+    throw new Error(`Missing required fields: ${missing.join(', ')}`);
+  }
+  
+  if (item.cartonQuantity < 0 || item.quantityPerCarton < 0) {
+    throw new Error('Quantities cannot be negative');
+  }
+  
+  return true;
+},
+}
 export default DataService;

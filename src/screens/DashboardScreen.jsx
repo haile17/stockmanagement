@@ -75,7 +75,7 @@ function DashboardScreen({ navigation }) {
     
     if (text.length > 0) {
       const filtered = inventory.filter(item => 
-        item.name && item.name.toLowerCase().includes(text.toLowerCase())
+       item.itemName && item.itemName.toLowerCase().includes(text.toLowerCase()) 
       );
       
       if (formType === 'sale') {
@@ -97,23 +97,23 @@ function DashboardScreen({ navigation }) {
   };
 
   const selectInventoryItem = (item, formType) => {
-    if (formType === 'sale') {
-      setSelectedItem(item);
-      handleFieldChange(formType, 'itemName', item.name);
-      handleFieldChange(formType, 'quantityPerCarton', item.quantityPerCarton?.toString() || '');
-      handleFieldChange(formType, 'pricePerPiece', item.pricePerPiece?.toString() || '');
-      handleFieldChange(formType, 'pricePerCarton', item.pricePerCarton?.toString() || '');
-      setShowNameDropdown(false);
-      setFilteredInventory([]);
-    } else if (formType === 'credit') {
-      setSelectedCreditItem(item);
-      handleFieldChange(formType, 'itemName', item.name);
-      handleFieldChange(formType, 'quantityPerCarton', item.quantityPerCarton?.toString() || '');
-      handleFieldChange(formType, 'pricePerPiece', item.pricePerPiece?.toString() || '');
-      setShowCreditNameDropdown(false);
-      setFilteredCreditInventory([]);
-    }
-  };
+  if (formType === 'sale') {
+    setSelectedItem(item);
+    handleFieldChange(formType, 'itemName', item.itemName);  // Changed from item.name
+    handleFieldChange(formType, 'quantityPerCarton', item.quantityPerCarton?.toString() || '');
+    handleFieldChange(formType, 'pricePerPiece', item.pricePerPiece?.toString() || '');
+    handleFieldChange(formType, 'pricePerCarton', item.pricePerCarton?.toString() || '');
+    setShowNameDropdown(false);
+    setFilteredInventory([]);
+  } else if (formType === 'credit') {
+    setSelectedCreditItem(item);
+    handleFieldChange(formType, 'itemName', item.itemName);  // Changed from item.name
+    handleFieldChange(formType, 'quantityPerCarton', item.quantityPerCarton?.toString() || '');
+    handleFieldChange(formType, 'pricePerPiece', item.pricePerPiece?.toString() || '');
+    setShowCreditNameDropdown(false);
+    setFilteredCreditInventory([]);
+  }
+};
 
   const calculateTotals = (formType, field, value) => {
     const currentItem = formType === 'sale' ? saleItem : (formType === 'credit' ? creditItem : purchaseItem);
@@ -155,35 +155,34 @@ function DashboardScreen({ navigation }) {
   };
 
   const validateQuantity = (quantity, formType) => {
-    const currentSelectedItem = formType === 'sale' ? selectedItem : selectedCreditItem;
-    
-    if (!currentSelectedItem && (formType === 'sale' || formType === 'credit')) {
-      showError('Error', 'Please select an item from inventory first');
+  const currentSelectedItem = formType === 'sale' ? selectedItem : selectedCreditItem;
+  
+  if (!currentSelectedItem && (formType === 'sale' || formType === 'credit')) {
+    showError('Error', 'Please select an item from inventory first');
+    return false;
+  }
+  
+  if (currentSelectedItem) {
+    const requestedQty = parseInt(quantity);
+    if (requestedQty > currentSelectedItem.cartonQuantity) {  // Changed from .quantity
+      showWarning('Insufficient Stock', `Only ${currentSelectedItem.cartonQuantity} cartons available in inventory`);
       return false;
     }
-    
-    if (currentSelectedItem) {
-      const requestedQty = parseInt(quantity);
-      if (requestedQty > currentSelectedItem.quantity) {
-        showWarning('Insufficient Stock', `Only ${currentSelectedItem.quantity} cartons available in inventory`);
-        return false;
-      }
-    }
-    
-    const updatedItem = calculateTotals(formType, 'cartonQuantity', quantity);
-    
-    // Update the form state with all calculated values
-    switch (formType) {
-      case 'sale':
-        setSaleItem(updatedItem);
-        break;
-      case 'credit':
-        setCreditItem(updatedItem);
-        break;
-    }
-    
-    return true;
-  };
+  }
+  
+  const updatedItem = calculateTotals(formType, 'cartonQuantity', quantity);
+  
+  switch (formType) {
+    case 'sale':
+      setSaleItem(updatedItem);
+      break;
+    case 'credit':
+      setCreditItem(updatedItem);
+      break;
+  }
+  
+  return true;
+};
 
   // Generic form field change handler
   const handleFieldChange = (formType, field, value) => {
@@ -223,39 +222,36 @@ function DashboardScreen({ navigation }) {
     }
   };
 
-  const handleSaleSubmit = async () => {
-    try {
-      // Validate that item exists in inventory
-      const inventoryItem = inventory.find(item => 
-        item.name === saleItem.itemName
-      );
-      
-      if (!inventoryItem) {
-        showError('Item Not Found', 'This item is not in your inventory. Please add it to inventory first.');
-        return;
-      }
-      
-      // Validate quantity
-      if (parseInt(saleItem.cartonQuantity) > inventoryItem.quantity) {
-        showWarning('Insufficient Stock', `Only ${inventoryItem.quantity} cartons available`);
-        return;
-      }
-      
-      // Set current date if not provided
-      const saleData = {
-        ...saleItem,
-        saleDate: saleItem.saleDate || new Date().toISOString()
-      };
-      
-      await DataService.saveSale(saleData);
-      setShowSalePopup(false);
-      resetForm('sale');
-      loadDashboardData();
-      showSuccess('Success', 'Sale recorded successfully');
-    } catch (error) {
-      showError('Error', error.message);
+ const handleSaleSubmit = async () => {
+  try {
+    const inventoryItem = inventory.find(item => 
+      item.itemName === saleItem.itemName  // Changed from item.name
+    );
+    
+    if (!inventoryItem) {
+      showError('Item Not Found', 'This item is not in your inventory. Please add it to inventory first.');
+      return;
     }
-  };
+    
+    if (parseInt(saleItem.cartonQuantity) > inventoryItem.cartonQuantity) {  // Changed from .quantity
+      showWarning('Insufficient Stock', `Only ${inventoryItem.cartonQuantity} cartons available`);
+      return;
+    }
+    
+    const saleData = {
+      ...saleItem,
+      saleDate: saleItem.saleDate || new Date().toISOString()
+    };
+    
+    await DataService.saveSale(saleData);
+    setShowSalePopup(false);
+    resetForm('sale');
+    loadDashboardData();
+    showSuccess('Success', 'Sale recorded successfully');
+  } catch (error) {
+    showError('Error', error.message);
+  }
+};
 
   const handlePurchaseSubmit = () => {
     try {
