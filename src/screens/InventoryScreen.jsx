@@ -22,11 +22,10 @@ const InventoryScreen = () => {
   const [importLoading, setImportLoading] = useState(false);
   const [fileSelected, setFileSelected] = useState(false);
   const [inventoryLoading, setInventoryLoading] = useState(true);
-   const [screenReady, setScreenReady] = useState(false);
+  const [screenReady, setScreenReady] = useState(false);
 
-const [tableAnimation] = useState(new Animated.Value(0)); 
+  const [tableAnimation] = useState(new Animated.Value(0)); 
 
-  
   // Initialize custom modal
   const { confirm: customConfirm, ModalComponent } = useCustomModal();
 
@@ -35,21 +34,20 @@ const [tableAnimation] = useState(new Animated.Value(0));
     loadInventory();
   }, []);
 
-
   const loadInventory = async () => {
     setInventoryLoading(true);
     tableAnimation.setValue(0);
     try {
       const items = await DataService.getInventory();
       setInventory(Array.isArray(items) ? items : []); // Ensure it's always an array
-        if (items && items.length > 0) { // Add this block
-          Animated.timing(tableAnimation, {
-            toValue: 1,
-            duration: 800,
-            useNativeDriver: true,
-          }).start();
-        }
-    }catch (error) {
+      if (items && items.length > 0) { // Add this block
+        Animated.timing(tableAnimation, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }).start();
+      }
+    } catch (error) {
       console.error('Error loading inventory:', error);
       customConfirm(
         'Failed to load inventory data. Please try again.',
@@ -86,58 +84,58 @@ const [tableAnimation] = useState(new Animated.Value(0));
     setShowTutorial(true);
   };
 
- const handleFileSelection = async () => {
-  console.log('handleFileSelection called');
-  try {
-    console.log('About to call FilePicker.showFilePicker');
-    
-    FilePicker.showFilePicker({
-      title: 'Select Excel File',
-      chooseFromLibraryButtonTitle: 'Choose from Files',
-      mediaType: 'mixed',
-      allowsEditing: false,
-    }, (response) => {
-      console.log('File selected:', response);
+  const handleFileSelection = async () => {
+    console.log('handleFileSelection called');
+    try {
+      console.log('About to call FilePicker.showFilePicker');
       
-      if (response.didCancel) {
-        console.log('User cancelled file selection');
-      } else if (response.error) {
-        console.error('FilePicker Error:', response.error);
-        customConfirm('Failed to select file from device storage', () => {}, null);
-      } else {
-        const file = {
-          name: response.fileName,
-          uri: response.uri,
-          size: response.fileSize,
-          type: response.type
-        };
+      FilePicker.showFilePicker({
+        title: 'Select Excel File',
+        chooseFromLibraryButtonTitle: 'Choose from Files',
+        mediaType: 'mixed',
+        allowsEditing: false,
+      }, (response) => {
+        console.log('File selected:', response);
         
-        if (validateExcelFile(file)) {
-          setExcelFile(file);
-          setFileSelected(true);
-          customConfirm(
-            `File Selected Successfully!\n\nFile: ${file.name}\nSize: ${file.size ? (file.size / 1024).toFixed(2) + ' KB' : 'Unknown'}\n\nYou can now click the Import button to process your data.`,
-            () => {},
-            null
-          );
+        if (response.didCancel) {
+          console.log('User cancelled file selection');
+        } else if (response.error) {
+          console.error('FilePicker Error:', response.error);
+          customConfirm('Failed to select file from device storage', () => {}, null);
+        } else {
+          const file = {
+            name: response.fileName,
+            uri: response.uri,
+            size: response.fileSize,
+            type: response.type
+          };
+          
+          if (validateExcelFile(file)) {
+            setExcelFile(file);
+            setFileSelected(true);
+            customConfirm(
+              `File Selected Successfully!\n\nFile: ${file.name}\nSize: ${file.size ? (file.size / 1024).toFixed(2) + ' KB' : 'Unknown'}\n\nYou can now click the Import button to process your data.`,
+              () => {},
+              null
+            );
+          }
         }
-      }
-    });
-  } catch (err) {
-    console.log('FilePicker error:', err);
-    customConfirm('Failed to select file from device storage', () => {}, null);
-  }
-};
+      });
+    } catch (err) {
+      console.log('FilePicker error:', err);
+      customConfirm('Failed to select file from device storage', () => {}, null);
+    }
+  };
 
- const proceedWithFileSelection = () => {
-  console.log('proceedWithFileSelection called'); // Debug log
-  setShowTutorial(false);
-  // Increase delay to ensure modal is fully closed
-  setTimeout(() => {
-    console.log('About to call handleFileSelection'); // Debug log
-    handleFileSelection();
-  }, 300); // Increased from 100ms to 300ms
-};
+  const proceedWithFileSelection = () => {
+    console.log('proceedWithFileSelection called'); // Debug log
+    setShowTutorial(false);
+    // Increase delay to ensure modal is fully closed
+    setTimeout(() => {
+      console.log('About to call handleFileSelection'); // Debug log
+      handleFileSelection();
+    }, 300); // Increased from 100ms to 300ms
+  };
 
   const closeTutorial = () => {
     setShowTutorial(false);
@@ -183,15 +181,16 @@ const [tableAnimation] = useState(new Animated.Value(0));
         return;
       }
       
-      // Validate required columns
-      const requiredColumns = ['Name', 'Part Number', 'Quantity', 'Price', 'Source'];
+      // Validate required columns for kitchen retailer
+      const requiredColumns = ['Item Name', 'Carton Quantity', 'Quantity Per Carton', 'Price Per Piece', 'Price Per Carton', 'Purchase Price Per Piece', 'Purchase Price Per Carton', 'Source'];
+      const optionalColumns = ['Item Code', 'Bulk Unit', 'Min Stock Alert', 'Last Purchase Date'];
       const firstRow = data[0];
       
       // Check if all required columns exist (case-insensitive)
       const missingColumns = [];
       const hasAllColumns = requiredColumns.every(col => {
         const hasColumn = Object.keys(firstRow).some(key => 
-          key.toLowerCase().trim() === col.toLowerCase()
+          key.toLowerCase().trim().replace(/\s+/g, ' ') === col.toLowerCase()
         );
         if (!hasColumn) {
           missingColumns.push(col);
@@ -201,7 +200,7 @@ const [tableAnimation] = useState(new Animated.Value(0));
       
       if (!hasAllColumns) {
         customConfirm(
-          `Excel file is missing required columns: ${missingColumns.join(', ')}\n\nPlease ensure your file has these exact columns:\n• Name\n• Part Number\n• Quantity\n• Price\n• Source`,
+          `Excel file is missing required columns: ${missingColumns.join(', ')}\n\nRequired columns:\n• Item Name\n• Carton Quantity\n• Quantity Per Carton\n• Price Per Piece\n• Price Per Carton\n• Purchase Price Per Piece\n• Purchase Price Per Carton\n• Source\n\nOptional columns:\n• Item Code\n• Bulk Unit\n• Min Stock Alert\n• Last Purchase Date`,
           () => {},
           null
         );
@@ -220,37 +219,64 @@ const [tableAnimation] = useState(new Animated.Value(0));
           // Map Excel columns to inventory item properties (case-insensitive)
           const getColumn = (colName) => {
             const col = Object.keys(row).find(key => 
-              key.toLowerCase().trim() === colName.toLowerCase()
+              key.toLowerCase().trim().replace(/\s+/g, ' ') === colName.toLowerCase()
             );
             return row[col];
           };
           
+          const cartonQuantity = parseInt(getColumn('carton quantity')) || 0;
+          const quantityPerCarton = parseInt(getColumn('quantity per carton')) || 0;
+          const totalQuantity = cartonQuantity * quantityPerCarton;
+          
           const item = {
-            name: String(getColumn('name') || '').trim(),
-            partNumber: String(getColumn('part number') || '').trim(),
-            quantity: parseInt(getColumn('quantity')) || 0,
-            price: parseFloat(getColumn('price')) || 0,
-            source: String(getColumn('source') || 'Excel Import').trim()
+            itemName: String(getColumn('item name') || '').trim(),
+            itemCode: String(getColumn('item code') || '').trim(),
+            cartonQuantity: cartonQuantity,
+            quantityPerCarton: quantityPerCarton,
+            totalQuantity: totalQuantity,
+            pricePerPiece: parseFloat(getColumn('price per piece')) || 0,
+            pricePerCarton: parseFloat(getColumn('price per carton')) || 0,
+            purchasePricePerPiece: parseFloat(getColumn('purchase price per piece')) || 0,
+            purchasePricePerCarton: parseFloat(getColumn('purchase price per carton')) || 0,
+            bulkUnit: String(getColumn('bulk unit') || 'Carton').trim(),
+            source: String(getColumn('source') || 'Excel Import').trim(),
+            lastPurchaseDate: getColumn('last purchase date') ? new Date(getColumn('last purchase date')).toISOString() : new Date().toISOString(),
+            minStockAlert: parseInt(getColumn('min stock alert')) || null
           };
           
           // Validate item data
-          if (!item.name) {
-            errorDetails.push(`Row ${i + 2}: Missing name`);
+          if (!item.itemName) {
+            errorDetails.push(`Row ${i + 2}: Missing item name`);
             errorCount++;
             continue;
           }
-          if (!item.partNumber) {
-            errorDetails.push(`Row ${i + 2}: Missing part number`);
+          if (isNaN(item.cartonQuantity) || item.cartonQuantity <= 0) {
+            errorDetails.push(`Row ${i + 2}: Invalid carton quantity (${getColumn('carton quantity')})`);
             errorCount++;
             continue;
           }
-          if (isNaN(item.quantity) || item.quantity <= 0) {
-            errorDetails.push(`Row ${i + 2}: Invalid quantity (${getColumn('quantity')})`);
+          if (isNaN(item.quantityPerCarton) || item.quantityPerCarton <= 0) {
+            errorDetails.push(`Row ${i + 2}: Invalid quantity per carton (${getColumn('quantity per carton')})`);
             errorCount++;
             continue;
           }
-          if (isNaN(item.price) || item.price <= 0) {
-            errorDetails.push(`Row ${i + 2}: Invalid price (${getColumn('price')})`);
+          if (isNaN(item.pricePerPiece) || item.pricePerPiece <= 0) {
+            errorDetails.push(`Row ${i + 2}: Invalid price per piece (${getColumn('price per piece')})`);
+            errorCount++;
+            continue;
+          }
+          if (isNaN(item.pricePerCarton) || item.pricePerCarton <= 0) {
+            errorDetails.push(`Row ${i + 2}: Invalid price per carton (${getColumn('price per carton')})`);
+            errorCount++;
+            continue;
+          }
+          if (isNaN(item.purchasePricePerPiece) || item.purchasePricePerPiece <= 0) {
+            errorDetails.push(`Row ${i + 2}: Invalid purchase price per piece (${getColumn('purchase price per piece')})`);
+            errorCount++;
+            continue;
+          }
+          if (isNaN(item.purchasePricePerCarton) || item.purchasePricePerCarton <= 0) {
+            errorDetails.push(`Row ${i + 2}: Invalid purchase price per carton (${getColumn('purchase price per carton')})`);
             errorCount++;
             continue;
           }
@@ -294,38 +320,38 @@ const [tableAnimation] = useState(new Animated.Value(0));
   };
 
   const confirmDeleteItem = (index, item) => {
-  customConfirm(
-    `Are you sure you want to delete "${item.name}"?\n\nThis action cannot be undone.`,
-    () => deleteItem(index),
-    () => {}
-  );
-};
+    customConfirm(
+      `Are you sure you want to delete "${item.itemName}"?\n\nThis action cannot be undone.`,
+      () => deleteItem(index),
+      () => {}
+    );
+  };
 
-const deleteItem = async (index) => {
-  try {
-    // Remove item from local state
-    const updatedInventory = inventory.filter((_, i) => i !== index);
-    setInventory(updatedInventory);
-    
-    // Delete from storage using DataService
-    await DataService.deleteInventoryItem(inventory[index]);
-    
-    customConfirm(
-      'Item deleted successfully!',
-      () => {},
-      null
-    );
-  } catch (error) {
-    console.error('Error deleting item:', error);
-    customConfirm(
-      'Failed to delete item. Please try again.',
-      () => {},
-      null
-    );
-    // Reload inventory to restore state if delete failed
-    loadInventory();
-  }
-};
+  const deleteItem = async (index) => {
+    try {
+      // Remove item from local state
+      const updatedInventory = inventory.filter((_, i) => i !== index);
+      setInventory(updatedInventory);
+      
+      // Delete from storage using DataService
+      await DataService.deleteInventoryItem(inventory[index]);
+      
+      customConfirm(
+        'Item deleted successfully!',
+        () => {},
+        null
+      );
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      customConfirm(
+        'Failed to delete item. Please try again.',
+        () => {},
+        null
+      );
+      // Reload inventory to restore state if delete failed
+      loadInventory();
+    }
+  };
 
   const confirmClearFile = () => {
     customConfirm(
@@ -340,11 +366,31 @@ const deleteItem = async (index) => {
     setFileSelected(false);
   };
 
+  // Check for low stock items
+  const checkLowStock = (item) => {
+    if (item.minStockAlert && item.cartonQuantity <= item.minStockAlert) {
+      return true;
+    }
+    return false;
+  };
+
+  // Get stock status indicator
+  const getStockStatusIcon = (item) => {
+    if (item.cartonQuantity === 0) {
+      return <Icon name="alert-circle" size={16} color="#f44336" />;
+    } else if (checkLowStock(item)) {
+      return <Icon name="warning" size={16} color="#ff9800" />;
+    } else {
+      return <Icon name="checkmark-circle" size={16} color="#4CAF50" />;
+    }
+  };
+
   useFocusEffect(
-  React.useCallback(() => {
-    StatusBar.setHidden(true, 'fade');
-  }, [])
-);
+    React.useCallback(() => {
+      StatusBar.setHidden(true, 'fade');
+    }, [])
+  );
+
   return (
     <ImageBackground
       source={require('../components/images/judas.jpg')} // or use a URI
@@ -353,133 +399,136 @@ const deleteItem = async (index) => {
       resizeMode='cover'
     >
       {screenReady ? (  
-    <ScrollView
-    contentContainerStyle={{  flexGrow: 1  }}
-    keyboardShouldPersistTaps="handled"
-  >
-    <View style={[styles.container, { padding: 20 }]}>
-      {/* Custom Modal Component */}
-      <ModalComponent />
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={[styles.container, { padding: 20 }]}>
+            {/* Custom Modal Component */}
+            <ModalComponent />
 
-      {/* Tutorial Modal */}
-     <TutorialModal
-        visible={showTutorial}
-        onClose={closeTutorial}
-        onProceed={proceedWithFileSelection}
-      />
+            {/* Tutorial Modal */}
+            <TutorialModal
+              visible={showTutorial}
+              onClose={closeTutorial}
+              onProceed={proceedWithFileSelection}
+            />
 
-      {/* Import Section */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>📥 Import Inventory Data</Text>
-        
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-           <Button 
-              onPress={handleFilePick} 
-              ariaLabel="Choose File" 
-              disabled={importLoading}
-              title="Choose Excel File"
-              icon={<Icon name="document-attach" size={20} color="white" />}
-              iconPosition="left"
-            />
-            <Button 
-              onPress={confirmImport} 
-              disabled={!fileSelected || importLoading } 
-              ariaLabel="Import"
-              style={[(!fileSelected) && styles.disabledButton]}
-              title={importLoading ? 'Importing...' : 'Import Data'}
-              icon={<Icon name="cloud-upload" size={20} color="white" />}
-              iconPosition="left"
-            />
-        </View>
-        
-        {excelFile && (
-          <View style={styles.fileInfo}>
-            <View style={styles.fileDetails}>
-              <Icon name="document" size={16} color="#4CAF50" />
-              <Text style={styles.fileName}>{excelFile.name}</Text>
-              {excelFile.size && (
-                <Text style={styles.fileSize}>({(excelFile.size / 1024).toFixed(2)} KB)</Text>
+            {/* Import Section */}
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>📥 Import Kitchen Inventory Data</Text>
+              
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Button 
+                  onPress={handleFilePick} 
+                  ariaLabel="Choose File" 
+                  disabled={importLoading}
+                  title="Choose Excel File"
+                  icon={<Icon name="document-attach" size={20} color="white" />}
+                  iconPosition="left"
+                />
+                <Button 
+                  onPress={confirmImport} 
+                  disabled={!fileSelected || importLoading} 
+                  ariaLabel="Import"
+                  style={[(!fileSelected) && styles.disabledButton]}
+                  title={importLoading ? 'Importing...' : 'Import Data'}
+                  icon={<Icon name="cloud-upload" size={20} color="white" />}
+                  iconPosition="left"
+                />
+              </View>
+              
+              {excelFile && (
+                <View style={styles.fileInfo}>
+                  <View style={styles.fileDetails}>
+                    <Icon name="document" size={16} color="#4CAF50" />
+                    <Text style={styles.fileName}>{excelFile.name}</Text>
+                    {excelFile.size && (
+                      <Text style={styles.fileSize}>({(excelFile.size / 1024).toFixed(2)} KB)</Text>
+                    )}
+                  </View>
+                  <TouchableOpacity onPress={confirmClearFile} style={styles.clearButton}>
+                    <Icon name="close-circle" size={20} color="#f44336" />
+                  </TouchableOpacity>
+                </View>
+              )}
+              
+              {!fileSelected && (
+                <Text style={styles.helpText}>
+                  💡 Click "Choose Excel File" to see formatting guidelines and select your kitchen inventory file
+                </Text>
               )}
             </View>
-            <TouchableOpacity onPress={confirmClearFile} style={styles.clearButton}>
-              <Icon name="close-circle" size={20} color="#f44336" />
-            </TouchableOpacity>
-          </View>
-        )}
-        
-        {!fileSelected && (
-          <Text style={styles.helpText}>
-            💡 Click "Choose Excel File" to see formatting guidelines and select your inventory file
-          </Text>
-        )}
-      </View>
 
-      {/* Inventory Display Section */}
-      <View style={[styles.sectionHeader]}>
-        <View style={styles.titleHeader}>
-          <Text style={styles.sectionTitle}>📦 Inventory Database</Text>
-          <Text style={styles.itemCount}>
-            {inventory.length} {inventory.length === 1 ? 'item' : 'items'}
-          </Text>
-        </View>
-        
-        {inventoryLoading ? (
-          <View style={styles.loadingContainer}>
-            <CircleFade size={48} color="#393247" />
-            <Text style={styles.loadingText}>Loading inventory...</Text>
-          </View>
-        
-        ) : inventory.length > 0 ? (
-          <Animated.View 
-                style={{ 
-                  opacity: tableAnimation,
-                  transform: [{ 
-                    translateY: tableAnimation.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [10, 0]
-                    })
-                  }]
-                }}
-              >
-
-          <ScrollView style={{ minHeight: 450, marginHorizontal: 0 }}>
-            <Table
-              headers={["Name", "Part Number", "Quantity", "Price", "Source", "Action"]}
-              data={inventory.map((item, index) => [
-                item.name || '', 
-                item.partNumber || '', 
-                (item.quantity || 0).toString(), 
-                `ETB ${formatNumberWithCommas(item.price || 0)}`, 
-                item.source || '',
-                <TouchableOpacity 
-                  key={index}
-                  onPress={() => confirmDeleteItem(index, item)}
-                  style={styles.deleteButton}
+            {/* Inventory Display Section */}
+            <View style={[styles.sectionHeader]}>
+              <View style={styles.titleHeader}>
+                <Text style={styles.sectionTitle}>🍽️ Kitchen Inventory Database</Text>
+                <Text style={styles.itemCount}>
+                  {inventory.length} {inventory.length === 1 ? 'item' : 'items'}
+                </Text>
+              </View>
+              
+              {inventoryLoading ? (
+                <View style={styles.loadingContainer}>
+                  <CircleFade size={48} color="#393247" />
+                  <Text style={styles.loadingText}>Loading inventory...</Text>
+                </View>
+              
+              ) : inventory.length > 0 ? (
+                <Animated.View 
+                  style={{ 
+                    opacity: tableAnimation,
+                    transform: [{ 
+                      translateY: tableAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [10, 0]
+                      })
+                    }]
+                  }}
                 >
-                  <Icon name="trash" size={16} color="#f44336" />
-                </TouchableOpacity>
-              ])}
-              noDataMessage="No inventory data available"
-            />
-          </ScrollView>
-          </Animated.View>
-        ) : (
-          <View style={styles.emptyState}>
-            <Icon name="archive-outline" size={48} color="#ccc" />
-            <Text style={styles.emptyTitle}>No Inventory Data</Text>
-            <Text style={styles.emptySubtitle}>
-              Import your first Excel file to get started with inventory management
-            </Text>
+                  <ScrollView style={{ minHeight: 450, marginHorizontal: 0 }}>
+                    <Table
+                      headers={["Status", "Item Name", "Code", "Cartons", "Per Carton", "Total Pcs", "Sell Price/Pc", "Buy Price/Pc", "Source", "Action"]}
+                      data={inventory.map((item, index) => [
+                        getStockStatusIcon(item),
+                        item.itemName || '', 
+                        item.itemCode || '', 
+                        (item.cartonQuantity || 0).toString(), 
+                        (item.quantityPerCarton || 0).toString(),
+                        (item.totalQuantity || 0).toString(),
+                        `ETB ${formatNumberWithCommas(item.pricePerPiece || 0)}`, 
+                        `ETB ${formatNumberWithCommas(item.purchasePricePerPiece || 0)}`, 
+                        item.source || '',
+                        <TouchableOpacity 
+                          key={index}
+                          onPress={() => confirmDeleteItem(index, item)}
+                          style={styles.deleteButton}
+                        >
+                          <Icon name="trash" size={16} color="#f44336" />
+                        </TouchableOpacity>
+                      ])}
+                      noDataMessage="No inventory data available"
+                    />
+                  </ScrollView>
+                </Animated.View>
+              ) : (
+                <View style={styles.emptyState}>
+                  <Icon name="restaurant-outline" size={48} color="#ccc" />
+                  <Text style={styles.emptyTitle}>No Kitchen Inventory Data</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Import your first Excel file to get started with kitchen inventory management
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
-        )}
-      </View>
-    </View>
-    </ScrollView>
+        </ScrollView>
       ) : (
-      <View style={styles.loadingContainer}>
-        <CircleFade size={48} color="#393247" />
-      </View>
-    )}
+        <View style={styles.loadingContainer}>
+          <CircleFade size={48} color="#393247" />
+        </View>
+      )}
     </ImageBackground>
   );
 };

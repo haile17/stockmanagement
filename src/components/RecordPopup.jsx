@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput, Modal, FlatList, TouchableOpacity ,ScrollView, KeyboardAvoidingView, StatusBar, Animated} from 'react-native';
+import { View, Text, TextInput, Modal, FlatList, TouchableOpacity ,ScrollView, KeyboardAvoidingView, StatusBar, Animated, Platform} from 'react-native';
 import { StyleSheet } from 'react-native';
 import Button from './Button';
 import styles from '../styles/RecordPopup';
@@ -16,12 +16,10 @@ const RecordPopup = ({
   onSubmit,
   submitButtonText = "Submit",
   onNameSearch,
-  onPartNumberSearch,
   onSelectItem,
   onQuantityChange,
   filteredInventory = [],
   showNameDropdown = false,
-  showPartNumberDropdown = false,
   selectedItem = null,
   formType = 'sale'
 }) => {
@@ -79,8 +77,19 @@ const RecordPopup = ({
       onClose();
     });
   };
+
   const handleSubmit = () => {
-    const requiredFields = ['name', 'partNumber', 'quantity', 'price'];
+    // Get required fields based on form type
+    let requiredFields = [];
+    
+    if (formType === 'sale') {
+      requiredFields = ['itemName', 'cartonQuantity', 'quantityPerCarton', 'pricePerPiece', 'pricePerCarton'];
+    } else if (formType === 'purchase') {
+      requiredFields = ['itemName', 'cartonQuantity', 'quantityPerCarton', 'purchasePricePerPiece', 'purchasePricePerCarton'];
+    } else if (formType === 'credit') {
+      requiredFields = ['itemName', 'cartonQuantity', 'quantityPerCarton', 'pricePerPiece', 'customerName'];
+    }
+
     const missingFields = requiredFields.filter(field => !formData[field] || formData[field].trim() === '');
 
     if (missingFields.length > 0) {
@@ -98,42 +107,70 @@ const RecordPopup = ({
     >
       <Text style={styles.dropdownItemName}>{item.name}</Text>
       <Text style={styles.dropdownItemDetails}>
-        {item.partNumber} - Qty: {item.quantity} - ETB{item.price}
+        Qty: {item.quantity} cartons - {item.quantityPerCarton} pcs/carton - ETB{item.pricePerPiece}/pc
       </Text>
     </TouchableOpacity>
   );
 
   const handleFieldChange = (field, value) => {
-    if (field === 'name' && onNameSearch) {
+    if (field === 'itemName' && onNameSearch) {
       onNameSearch(value, formType);
-    } else if (field === 'partNumber' && onPartNumberSearch) {
-      onPartNumberSearch(value, formType);
-    } else if (field === 'quantity' && onQuantityChange) {
+    } else if (field === 'cartonQuantity' && onQuantityChange) {
       onQuantityChange(value, formType);
     } else {
       onFieldChange(field, value);
     }
   };
 
-  const isFieldEditable = (fieldKey) => {
-    return true;
+  const isFieldEditable = (field) => {
+    const field_config = fields.find(f => f.key === field);
+    return field_config ? field_config.editable !== false : true;
   };
 
   const shouldShowDropdown = (fieldKey) => {
-    return (formType === 'sale' || formType === 'credit') && 
-           (fieldKey === 'name' || fieldKey === 'partNumber');
+    return (formType === 'sale' || formType === 'credit') && fieldKey === 'itemName';
   };
 
   const getIconName = (fieldKey) => {
     switch (fieldKey) {
-      case 'name':
-        return 'person-outline';
-      case 'partNumber':
-        return 'pricetag-outline';
-      case 'quantity':
+      case 'itemName':
         return 'cube-outline';
-      case 'price':
+      case 'cartonQuantity':
+        return 'layers-outline';
+      case 'quantityPerCarton':
+        return 'grid-outline';
+      case 'totalQuantity':
+        return 'calculator-outline';
+      case 'pricePerPiece':
+      case 'purchasePricePerPiece':
+        return 'pricetag-outline';
+      case 'pricePerCarton':
+      case 'purchasePricePerCarton':
+        return 'pricetags-outline';
+      case 'totalAmount':
         return 'cash-outline';
+      case 'plateNumber':
+        return 'car-outline';
+      case 'place':
+        return 'location-outline';
+      case 'paymentMethod':
+        return 'card-outline';
+      case 'customerName':
+        return 'person-outline';
+      case 'phoneNumber':
+        return 'call-outline';
+      case 'source':
+        return 'business-outline';
+      case 'amountPaid':
+        return 'wallet-outline';
+      case 'remainingBalance':
+        return 'time-outline';
+      case 'paymentStatus':
+        return 'checkmark-circle-outline';
+      case 'dueDate':
+        return 'calendar-outline';
+      case 'notes':
+        return 'document-text-outline';
       default:
         return 'document-text-outline';
     }
@@ -196,130 +233,112 @@ const RecordPopup = ({
             {selectedItem && (formType === 'sale' || formType === 'credit') && (
               <View style={styles.selectedItemInfo}>
                 <Text style={styles.selectedItemText}>
-                  Selected: {selectedItem.name} (Available: {selectedItem.quantity})
+                  Selected: {selectedItem.name} (Available: {selectedItem.quantity} cartons)
                 </Text>
                 <Text style={styles.selectedItemSubText}>
-                  Original Price: ETB{selectedItem.price} (You can modify the price below)
+                  {selectedItem.quantityPerCarton} pieces per carton - Original Price: ETB{selectedItem.pricePerPiece}/piece
                 </Text>
               </View>
             )}
 
             {fields.map((field, index) => (
-              <View key={index} style={styles.inputContainer}>
-                <View style={styles.labelWithIcon}>
-                  <Icon
-                    name={getIconName(field.key)}
-                    size={16}
-                    color="#555"
-                    style={styles.labelIcon}
-                  />
-                  <Text style={styles.label}>
-                    {field.label}
-                    {field.required && <Text style={styles.required}> *</Text>}
-                  </Text>
-                </View>
-                <View style={styles.inputWrapper}>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      field.key === 'price' && selectedItem && (formType === 'sale' || formType === 'credit') 
-                        ? styles.editablePrice 
-                        : null
-                    ]}
-                    placeholder={field.placeholder}
-                    placeholderTextColor="#999"
-                    value={formData[field.key] || ''}
-                    onChangeText={(text) => handleFieldChange(field.key, text)}
-                    keyboardType={field.keyboardType || 'default'}
-                    editable={isFieldEditable(field.key)}
-                  />
-                  
-                  {field.key === 'price' && selectedItem && (formType === 'sale' || formType === 'credit') && (
-                    <Text style={styles.priceHint}>
-                      💡 Price is editable - modify as needed
-                    </Text>
-                  )}
-                  
-                  {shouldShowDropdown(field.key) && field.key === 'name' && showNameDropdown && filteredInventory.length > 0 && (
-                    <View style={styles.dropdown}>
-                      <ScrollView 
-                        style={[styles.dropdownList, { maxHeight: 150 }]}
-                        nestedScrollEnabled={true}
-                        showsVerticalScrollIndicator={true}
-                      >
-                        {filteredInventory.map((item, index) => (
-                          <TouchableOpacity
-                            key={`${item.partNumber}-${index}`} // Better key
-                            style={styles.dropdownItem}
-                            onPress={() => onSelectItem(item, formType)}
-                          >
-                            <Text style={styles.dropdownItemName}>{item.name}</Text>
-                            <Text style={styles.dropdownItemDetails}>
-                              {item.partNumber} - Qty: {item.quantity} - ETB{item.price}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    </View>
-                  )}
-                  
-                  {shouldShowDropdown(field.key) && field.key === 'partNumber' && showPartNumberDropdown && filteredInventory.length > 0 && (
-                    <View style={styles.dropdown}>
-                      <ScrollView 
-                        style={[styles.dropdownList, { maxHeight: 150 }]}
-                        nestedScrollEnabled={true}
-                        showsVerticalScrollIndicator={true}
-                      >
-                        {filteredInventory.map((item, index) => (
-                          <TouchableOpacity
-                            key={`${item.partNumber}-${index}`}
-                            style={styles.dropdownItem}
-                            onPress={() => onSelectItem(item, formType)}
-                          >
-                            <Text style={styles.dropdownItemName}>{item.name}</Text>
-                            <Text style={styles.dropdownItemDetails}>
-                              {item.partNumber} - Qty: {item.quantity} - ETB{item.price}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    </View>
-                  )}
-                </View>
-              </View>
-            ))}
-          </ScrollView>
-          </KeyboardAvoidingView>
+             <View key={index} style={styles.inputContainer}>
+               <View style={styles.labelWithIcon}>
+                 <Icon
+                   name={getIconName(field.key)}
+                   size={16}
+                   color="#555"
+                   style={styles.labelIcon}
+                 />
+                 <Text style={styles.label}>
+                   {field.label}
+                   {field.required && <Text style={styles.required}> *</Text>}
+                 </Text>
+               </View>
+               <View style={styles.inputWrapper}>
+                 <TextInput
+                   style={[
+                     styles.input,
+                     !isFieldEditable(field.key) && styles.disabledInput,
+                     (field.key === 'totalQuantity' || field.key === 'totalAmount' || field.key === 'remainingBalance') && styles.calculatedField
+                   ]}
+                   placeholder={field.placeholder}
+                   placeholderTextColor="#999"
+                   value={formData[field.key] || ''}
+                   onChangeText={(text) => handleFieldChange(field.key, text)}
+                   keyboardType={field.keyboardType || 'default'}
+                   editable={isFieldEditable(field.key)}
+                 />
+                 
+                 {(field.key === 'totalQuantity' || field.key === 'totalAmount' || field.key === 'remainingBalance') && (
+                   <Text style={styles.calculatedHint}>
+                     🔢 Auto-calculated field
+                   </Text>
+                 )}
+                 
+                 {field.key === 'pricePerPiece' && selectedItem && (formType === 'sale' || formType === 'credit') && (
+                   <Text style={styles.priceHint}>
+                     💡 Price is editable - modify as needed
+                   </Text>
+                 )}
+                 
+                 {shouldShowDropdown(field.key) && field.key === 'itemName' && showNameDropdown && filteredInventory.length > 0 && (
+                   <View style={styles.dropdown}>
+                     <ScrollView 
+                       style={[styles.dropdownList, { maxHeight: 150 }]}
+                       nestedScrollEnabled={true}
+                       showsVerticalScrollIndicator={true}
+                     >
+                       {filteredInventory.map((item, index) => (
+                         <TouchableOpacity
+                           key={`${item.name}-${index}`}
+                           style={styles.dropdownItem}
+                           onPress={() => onSelectItem(item, formType)}
+                         >
+                           <Text style={styles.dropdownItemName}>{item.name}</Text>
+                           <Text style={styles.dropdownItemDetails}>
+                             Qty: {item.quantity} cartons - {item.quantityPerCarton} pcs/carton - ETB{item.pricePerPiece}/pc
+                           </Text>
+                         </TouchableOpacity>
+                       ))}
+                     </ScrollView>
+                   </View>
+                 )}
+               </View>
+             </View>
+           ))}
+         </ScrollView>
+         </KeyboardAvoidingView>
+         
+         <View style={styles.footer}>
+           <Button
+             type="outline"
+             size="small"
+             title="Cancel"
+             onPress={onClose}
+             fullWidth={true}
+             icon={<Icon name="close-circle-outline" size={18} color="#64748b" />}
+             iconPosition="left"
+             ariaLabel="Cancel action"
+             style={{ marginRight: 8 }}
+           />
+           <Button
+             type="gradient"
+             size="medium"
+             title={submitButtonText}
+             onPress={handleSubmit}
+             fullWidth={true}
+             icon={<Icon name="checkmark-circle-outline" size={18} color="#ffffff" />}
+             iconPosition="left"
+             ariaLabel={`${submitButtonText} form`}
+             style={{ marginLeft: 8 }}
+           />
+         </View>
           
-          <View style={styles.footer}>
-            <Button
-              type="outline"
-              size="small"
-              title="Cancel"
-              onPress={onClose}
-              fullWidth={true}
-              icon={<Icon name="close-circle-outline" size={18} color="#64748b" />}
-              iconPosition="left"
-              ariaLabel="Cancel action"
-              style={{ marginRight: 8 }}
-            />
-            <Button
-              type="gradient"
-              size="medium"
-              title={submitButtonText}
-              onPress={handleSubmit}
-              fullWidth={true}
-              icon={<Icon name="checkmark-circle-outline" size={18} color="#ffffff" />}
-              iconPosition="left"
-              ariaLabel={`${submitButtonText} form`}
-              style={{ marginLeft: 8 }}
-            />
-          </View>
-           
-        </Animated.View>
-      </Animated.View>
-    </Modal>
-  );
+       </Animated.View>
+     </Animated.View>
+   </Modal>
+ );
 };
 
 export default RecordPopup;

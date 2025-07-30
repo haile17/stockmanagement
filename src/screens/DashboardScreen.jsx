@@ -26,14 +26,11 @@ function DashboardScreen({ navigation }) {
   const [inventory, setInventory] = useState([]);
   const [filteredInventory, setFilteredInventory] = useState([]);
   const [showNameDropdown, setShowNameDropdown] = useState(false);
-  const [showPartNumberDropdown, setShowPartNumberDropdown] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [showCreditNameDropdown, setShowCreditNameDropdown] = useState(false);
-  const [showCreditPartNumberDropdown, setShowCreditPartNumberDropdown] = useState(false);
   const [selectedCreditItem, setSelectedCreditItem] = useState(null);
   const [filteredCreditInventory, setFilteredCreditInventory] = useState([]);
   const { showSuccess, showError, showWarning } = useAlert();
-
 
   useEffect(() => {
     loadDashboardData();
@@ -49,8 +46,8 @@ function DashboardScreen({ navigation }) {
       const today = new Date().toISOString().split('T')[0];
 
       const todaysSales = salesData
-        .filter(sale => sale?.date?.split('T')[0] === today)
-        .reduce((total, sale) => total + (sale.quantity * sale.price), 0);
+        .filter(sale => sale?.saleDate?.split('T')[0] === today)
+        .reduce((total, sale) => total + (sale.totalAmount || 0), 0);
 
       setTodaysSales(todaysSales);
 
@@ -58,7 +55,7 @@ function DashboardScreen({ navigation }) {
       setRecentPurchases(purchasesData.length);
 
       const creditsData = await DataService.getCredits() || [];
-      const totalCreditSales = creditsData.reduce((total, credit) => total + (credit.quantity * credit.price), 0);
+      const totalCreditSales = creditsData.reduce((total, credit) => total + (credit.totalAmount || 0), 0);
       setCreditSales(totalCreditSales);
 
       setRecentCredits(creditsData.slice(0, 5));
@@ -74,11 +71,11 @@ function DashboardScreen({ navigation }) {
   };
 
   const handleNameSearch = (text, formType) => {
-    handleFieldChange(formType, 'name', text);
+    handleFieldChange(formType, 'itemName', text);
     
     if (text.length > 0) {
       const filtered = inventory.filter(item => 
-        item.name.toLowerCase().includes(text.toLowerCase())
+        item.name && item.name.toLowerCase().includes(text.toLowerCase())
       );
       
       if (formType === 'sale') {
@@ -99,80 +96,108 @@ function DashboardScreen({ navigation }) {
     }
   };
 
-  const handlePartNumberSearch = (text, formType) => {
-    handleFieldChange(formType, 'partNumber', text);
-    
-    if (text.length > 0) {
-      const filtered = inventory.filter(item => 
-        item.partNumber.toLowerCase().includes(text.toLowerCase())
-      );
-      
-      if (formType === 'sale') {
-        setFilteredInventory(filtered);
-        setShowPartNumberDropdown(true);
-      } else if (formType === 'credit') {
-        setFilteredCreditInventory(filtered);
-        setShowCreditPartNumberDropdown(true);
-      }
-    } else {
-      if (formType === 'sale') {
-        setShowPartNumberDropdown(false);
-        setSelectedItem(null);
-      } else if (formType === 'credit') {
-        setShowCreditPartNumberDropdown(false);
-        setSelectedCreditItem(null);
-      }
-    }
-  };
-
   const selectInventoryItem = (item, formType) => {
     if (formType === 'sale') {
       setSelectedItem(item);
-      handleFieldChange(formType, 'name', item.name);
-      handleFieldChange(formType, 'partNumber', item.partNumber);
-      handleFieldChange(formType, 'price', item.price.toString());
+      handleFieldChange(formType, 'itemName', item.name);
+      handleFieldChange(formType, 'quantityPerCarton', item.quantityPerCarton?.toString() || '');
+      handleFieldChange(formType, 'pricePerPiece', item.pricePerPiece?.toString() || '');
+      handleFieldChange(formType, 'pricePerCarton', item.pricePerCarton?.toString() || '');
       setShowNameDropdown(false);
-      setShowPartNumberDropdown(false);
       setFilteredInventory([]);
     } else if (formType === 'credit') {
       setSelectedCreditItem(item);
-      handleFieldChange(formType, 'name', item.name);
-      handleFieldChange(formType, 'partNumber', item.partNumber);
-      handleFieldChange(formType, 'price', item.price.toString());
+      handleFieldChange(formType, 'itemName', item.name);
+      handleFieldChange(formType, 'quantityPerCarton', item.quantityPerCarton?.toString() || '');
+      handleFieldChange(formType, 'pricePerPiece', item.pricePerPiece?.toString() || '');
       setShowCreditNameDropdown(false);
-      setShowCreditPartNumberDropdown(false);
       setFilteredCreditInventory([]);
     }
+  };
+
+  const calculateTotals = (formType, field, value) => {
+    const currentItem = formType === 'sale' ? saleItem : (formType === 'credit' ? creditItem : purchaseItem);
+    let updatedItem = { ...currentItem, [field]: value };
+
+    // Calculate totalQuantity when cartonQuantity or quantityPerCarton changes
+    if (field === 'cartonQuantity' || field === 'quantityPerCarton') {
+      const cartons = parseInt(updatedItem.cartonQuantity) || 0;
+      const perCarton = parseInt(updatedItem.quantityPerCarton) || 0;
+      updatedItem.totalQuantity = (cartons * perCarton).toString();
+    }
+
+    // Calculate totalAmount for sales and credits
+    if (formType === 'sale' || formType === 'credit') {
+      if (field === 'cartonQuantity' || field === 'pricePerCarton') {
+        const cartons = parseInt(updatedItem.cartonQuantity) || 0;
+        const pricePerCarton = parseFloat(updatedItem.pricePerCarton) || 0;
+        updatedItem.totalAmount = (cartons * pricePerCarton).toString();
+      }
+    }
+
+    // Calculate totalAmount for purchases
+    if (formType === 'purchase') {
+      if (field === 'cartonQuantity' || field === 'purchasePricePerCarton') {
+        const cartons = parseInt(updatedItem.cartonQuantity) || 0;
+        const pricePerCarton = parseFloat(updatedItem.purchasePricePerCarton) || 0;
+        updatedItem.totalAmount = (cartons * pricePerCarton).toString();
+      }
+    }
+
+    // Calculate remaining balance for credits
+    if (formType === 'credit' && (field === 'totalAmount' || field === 'amountPaid')) {
+      const total = parseFloat(updatedItem.totalAmount) || 0;
+      const paid = parseFloat(updatedItem.amountPaid) || 0;
+      updatedItem.remainingBalance = (total - paid).toString();
+    }
+
+    return updatedItem;
   };
 
   const validateQuantity = (quantity, formType) => {
     const currentSelectedItem = formType === 'sale' ? selectedItem : selectedCreditItem;
     
-    if (!currentSelectedItem) {
+    if (!currentSelectedItem && (formType === 'sale' || formType === 'credit')) {
       showError('Error', 'Please select an item from inventory first');
       return false;
     }
     
-    const requestedQty = parseInt(quantity);
-    if (requestedQty > currentSelectedItem.quantity) {
-      showWarning('Insufficient Stock', `Only ${currentSelectedItem.quantity} units available in inventory`);
-      return false;
+    if (currentSelectedItem) {
+      const requestedQty = parseInt(quantity);
+      if (requestedQty > currentSelectedItem.quantity) {
+        showWarning('Insufficient Stock', `Only ${currentSelectedItem.quantity} cartons available in inventory`);
+        return false;
+      }
     }
-    handleFieldChange(formType, 'quantity', quantity);
+    
+    const updatedItem = calculateTotals(formType, 'cartonQuantity', quantity);
+    
+    // Update the form state with all calculated values
+    switch (formType) {
+      case 'sale':
+        setSaleItem(updatedItem);
+        break;
+      case 'credit':
+        setCreditItem(updatedItem);
+        break;
+    }
+    
     return true;
   };
 
   // Generic form field change handler
   const handleFieldChange = (formType, field, value) => {
+    const updatedItem = calculateTotals(formType, field, value);
+    
     switch (formType) {
       case 'sale':
-        setSaleItem(prev => ({ ...prev, [field]: value }));
+        setSaleItem(updatedItem);
         break;
       case 'purchase':
-        setPurchaseItem(prev => ({ ...prev, [field]: value }));
+        setPurchaseItem(updatedItem);
         break;
       case 'credit':
-        setCreditItem(prev => ({ ...prev, [field]: value }));
+        setCreditItem(updatedItem);
         break;
     }
   };
@@ -184,7 +209,6 @@ function DashboardScreen({ navigation }) {
         setSaleItem({});
         setSelectedItem(null);
         setShowNameDropdown(false);
-        setShowPartNumberDropdown(false);
         setFilteredInventory([]);
         break;
       case 'purchase':
@@ -194,7 +218,6 @@ function DashboardScreen({ navigation }) {
         setCreditItem({});
         setSelectedCreditItem(null);
         setShowCreditNameDropdown(false);
-        setShowCreditPartNumberDropdown(false);
         setFilteredCreditInventory([]);
         break;
     }
@@ -204,7 +227,7 @@ function DashboardScreen({ navigation }) {
     try {
       // Validate that item exists in inventory
       const inventoryItem = inventory.find(item => 
-        item.name === saleItem.name && item.partNumber === saleItem.partNumber
+        item.name === saleItem.itemName
       );
       
       if (!inventoryItem) {
@@ -213,12 +236,18 @@ function DashboardScreen({ navigation }) {
       }
       
       // Validate quantity
-      if (parseInt(saleItem.quantity) > inventoryItem.quantity) {
-        showWarning('Insufficient Stock', `Only ${inventoryItem.quantity} units available`);
+      if (parseInt(saleItem.cartonQuantity) > inventoryItem.quantity) {
+        showWarning('Insufficient Stock', `Only ${inventoryItem.quantity} cartons available`);
         return;
       }
       
-      await DataService.saveSale(saleItem);
+      // Set current date if not provided
+      const saleData = {
+        ...saleItem,
+        saleDate: saleItem.saleDate || new Date().toISOString()
+      };
+      
+      await DataService.saveSale(saleData);
       setShowSalePopup(false);
       resetForm('sale');
       loadDashboardData();
@@ -230,7 +259,13 @@ function DashboardScreen({ navigation }) {
 
   const handlePurchaseSubmit = () => {
     try {
-      DataService.savePurchase(purchaseItem);
+      // Set current date if not provided
+      const purchaseData = {
+        ...purchaseItem,
+        purchaseDate: purchaseItem.purchaseDate || new Date().toISOString()
+      };
+      
+      DataService.savePurchase(purchaseData);
       setShowPurchasePopup(false);
       resetForm('purchase');
       loadDashboardData();
@@ -242,21 +277,30 @@ function DashboardScreen({ navigation }) {
 
   const handleCreditSubmit = async () => {
     try {
-      // Validate that item exists in inventory (similar to sale)
+      // Validate that item exists in inventory
       const inventoryItem = inventory.find(item => 
-        item.name === creditItem.name && item.partNumber === creditItem.partNumber
+        item.name === creditItem.itemName
       );
       
       if (!inventoryItem) {
         showError('Item Not Found', 'This item is not in your inventory. Please add it to inventory first.');
         return;
       } 
+      
       // Validate quantity
-      if (parseInt(creditItem.quantity) > inventoryItem.quantity) {
-        showWarning('Insufficient Stock', `Only ${inventoryItem.quantity} units available`);
+      if (parseInt(creditItem.cartonQuantity) > inventoryItem.quantity) {
+        showWarning('Insufficient Stock', `Only ${inventoryItem.quantity} cartons available`);
         return;
       }
-      await DataService.saveCreditSale(creditItem);
+      
+      // Set current date and payment status if not provided
+      const creditData = {
+        ...creditItem,
+        creditDate: creditItem.creditDate || new Date().toISOString(),
+        paymentStatus: creditItem.paymentStatus || 'Unpaid'
+      };
+      
+      await DataService.saveCreditSale(creditData);
       setShowCreditPopup(false);
       resetForm('credit');
       loadDashboardData();
@@ -268,27 +312,45 @@ function DashboardScreen({ navigation }) {
 
   // Form field configurations
   const saleFields = [
-    { key: 'name', label: 'Item Name', placeholder: 'Enter item name', required: true },
-    { key: 'partNumber', label: 'Part Number', placeholder: 'Enter part number', required: true },
-    { key: 'quantity', label: 'Quantity', placeholder: 'Enter quantity', keyboardType: 'numeric', required: true },
-    { key: 'price', label: 'Price', placeholder: 'Enter price', keyboardType: 'numeric', required: true },
-    { key: 'customer', label: 'Customer Name', placeholder: 'Enter customer name' },
+    { key: 'itemName', label: 'Item Name', placeholder: 'Enter item name', required: true },
+    { key: 'cartonQuantity', label: 'Carton Quantity', placeholder: 'Enter number of cartons', keyboardType: 'numeric', required: true },
+    { key: 'quantityPerCarton', label: 'Quantity Per Carton', placeholder: 'Items per carton', keyboardType: 'numeric', required: true },
+    { key: 'totalQuantity', label: 'Total Quantity (Pieces)', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+    { key: 'pricePerPiece', label: 'Price Per Piece', placeholder: 'Enter price per piece', keyboardType: 'numeric', required: true },
+    { key: 'pricePerCarton', label: 'Price Per Carton', placeholder: 'Enter price per carton', keyboardType: 'numeric', required: true },
+    { key: 'totalAmount', label: 'Total Amount', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+    { key: 'plateNumber', label: 'Plate Number', placeholder: 'Vehicle plate number' },
+    { key: 'place', label: 'Place', placeholder: 'Sale/delivery location' },
+    { key: 'paymentMethod', label: 'Payment Method', placeholder: 'Cash/Credit/Transfer' },
   ];
 
   const purchaseFields = [
-    { key: 'name', label: 'Item Name', placeholder: 'Enter item name', required: true },
-    { key: 'partNumber', label: 'Part Number', placeholder: 'Enter part number', required: true },
-    { key: 'quantity', label: 'Quantity', placeholder: 'Enter quantity', keyboardType: 'numeric', required: true },
-    { key: 'price', label: 'Price', placeholder: 'Enter price', keyboardType: 'numeric', required: true },
-    { key: 'source', label: 'Source', placeholder: 'Enter source/supplier' },
+    { key: 'itemName', label: 'Item Name', placeholder: 'Enter item name', required: true },
+    { key: 'cartonQuantity', label: 'Carton Quantity', placeholder: 'Enter number of cartons', keyboardType: 'numeric', required: true },
+    { key: 'quantityPerCarton', label: 'Quantity Per Carton', placeholder: 'Items per carton', keyboardType: 'numeric', required: true },
+    { key: 'totalQuantity', label: 'Total Quantity (Pieces)', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+    { key: 'purchasePricePerPiece', label: 'Purchase Price Per Piece', placeholder: 'Enter purchase price per piece', keyboardType: 'numeric', required: true },
+    { key: 'purchasePricePerCarton', label: 'Purchase Price Per Carton', placeholder: 'Enter purchase price per carton', keyboardType: 'numeric', required: true },
+    { key: 'totalAmount', label: 'Total Amount', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+    { key: 'source', label: 'Source', placeholder: 'Supplier/origin' },
   ];
 
   const creditFields = [
-    { key: 'name', label: 'Item Name', placeholder: 'Enter item name', required: true },
-    { key: 'partNumber', label: 'Part Number', placeholder: 'Enter part number', required: true },
-    { key: 'quantity', label: 'Quantity', placeholder: 'Enter quantity', keyboardType: 'numeric', required: true },
-    { key: 'price', label: 'Price', placeholder: 'Enter price', keyboardType: 'numeric', required: true },
-    { key: 'customer', label: 'Customer Name', placeholder: 'Enter customer name' },
+    { key: 'itemName', label: 'Item Name', placeholder: 'Enter item name', required: true },
+    { key: 'cartonQuantity', label: 'Carton Quantity', placeholder: 'Enter number of cartons', keyboardType: 'numeric', required: true },
+    { key: 'quantityPerCarton', label: 'Quantity Per Carton', placeholder: 'Items per carton', keyboardType: 'numeric', required: true },
+    { key: 'totalQuantity', label: 'Total Quantity (Pieces)', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+    { key: 'pricePerPiece', label: 'Price Per Piece', placeholder: 'Enter price per piece', keyboardType: 'numeric', required: true },
+    { key: 'totalAmount', label: 'Total Amount', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+    { key: 'amountPaid', label: 'Amount Paid', placeholder: 'Upfront payment', keyboardType: 'numeric' },
+    { key: 'remainingBalance', label: 'Remaining Balance', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+    { key: 'customerName', label: 'Customer Name', placeholder: 'Enter customer name', required: true },
+    { key: 'phoneNumber', label: 'Phone Number', placeholder: 'Customer contact' },
+    { key: 'plateNumber', label: 'Plate Number', placeholder: 'Vehicle plate number' },
+    { key: 'place', label: 'Place', placeholder: 'Delivery/sale location' },
+    { key: 'paymentStatus', label: 'Payment Status', placeholder: 'Unpaid/Partially Paid/Paid' },
+    { key: 'dueDate', label: 'Due Date', placeholder: 'Expected payment date' },
+    { key: 'notes', label: 'Notes', placeholder: 'Custom remarks' },
   ];
 
   return (
@@ -338,11 +400,11 @@ function DashboardScreen({ navigation }) {
         <Table
           headers={['Date', 'Item', 'Amount', 'Status', 'Customer',]}
           data={recentCredits.map((credit) => [
-             formatDateOnly(credit.date),
-            credit.name,
-            `${formatNumberWithCommas(credit.quantity * credit.price)} Birr`,
-            credit.status,
-            credit.customer,
+             formatDateOnly(credit.creditDate),
+            credit.itemName,
+            `${formatNumberWithCommas(credit.totalAmount)} Birr`,
+            credit.paymentStatus,
+            credit.customerName,
           ])}
           noDataMessage="No recent credit sales"
         />
@@ -387,12 +449,10 @@ function DashboardScreen({ navigation }) {
         submitButtonText="Record Sale"
         formType="sale"
         onNameSearch={handleNameSearch}
-        onPartNumberSearch={handlePartNumberSearch}
         onSelectItem={selectInventoryItem}
         onQuantityChange={validateQuantity}
         filteredInventory={filteredInventory}
         showNameDropdown={showNameDropdown}
-        showPartNumberDropdown={showPartNumberDropdown}
         selectedItem={selectedItem}
       />
 
@@ -427,12 +487,10 @@ function DashboardScreen({ navigation }) {
         submitButtonText="Record Credit Sale"
         formType="credit"
         onNameSearch={handleNameSearch}
-        onPartNumberSearch={handlePartNumberSearch}
         onSelectItem={selectInventoryItem}
         onQuantityChange={validateQuantity}
         filteredInventory={filteredCreditInventory}
         showNameDropdown={showCreditNameDropdown}
-        showPartNumberDropdown={showCreditPartNumberDropdown}
         selectedItem={selectedCreditItem}
       />
     </View>
