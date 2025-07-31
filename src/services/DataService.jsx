@@ -22,7 +22,13 @@ export const DataService = {
       inventory[existingItemIndex] = {
         ...inventory[existingItemIndex],
         ...item,
-        totalQuantity,
+        // When updating existing items, add quantities instead of replacing for purchases
+        cartonQuantity: item.source === 'Purchase' ? 
+          (inventory[existingItemIndex].cartonQuantity || 0) + (item.cartonQuantity || 0) : 
+          (item.cartonQuantity || inventory[existingItemIndex].cartonQuantity),
+        totalQuantity: item.source === 'Purchase' ? 
+          ((inventory[existingItemIndex].cartonQuantity || 0) + (item.cartonQuantity || 0)) * (item.quantityPerCarton || inventory[existingItemIndex].quantityPerCarton) :
+          totalQuantity,
         databaseId: selectedDatabase ? selectedDatabase.id : inventory[existingItemIndex].databaseId,
       };
     } else {
@@ -264,7 +270,7 @@ export const DataService = {
       : purchases;
   },
 
-  savePurchase: async (purchase) => {
+ savePurchase: async (purchase) => {
   try {
     const selectedDatabase = JSON.parse(await AsyncStorage.getItem('selectedInventoryDatabase'));
     const purchases = await DataService.getPurchases();
@@ -279,18 +285,21 @@ export const DataService = {
     purchases.push(newPurchase);
     await AsyncStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
 
-    // Update inventory with proper error handling
+    // Update inventory with proper error handling - MODIFIED SECTION
     const inventoryItem = {
       itemName: purchase.itemName,
-      cartonQuantity: purchase.cartonQuantity || 0,
-      quantityPerCarton: purchase.quantityPerCarton || 0,
-      totalQuantity: (purchase.cartonQuantity || 0) * (purchase.quantityPerCarton || 0),
-      pricePerPiece: purchase.pricePerPiece || 0,
-      pricePerCarton: purchase.pricePerCarton || 0,
-      purchasePricePerPiece: purchase.purchasePricePerPiece || 0,
-      purchasePricePerCarton: purchase.purchasePricePerCarton || 0,
+      itemCode: purchase.itemCode || '', // Add this line
+      cartonQuantity: parseInt(purchase.cartonQuantity) || 0, // Ensure integer
+      quantityPerCarton: parseInt(purchase.quantityPerCarton) || 0, // Ensure integer
+      totalQuantity: (parseInt(purchase.cartonQuantity) || 0) * (parseInt(purchase.quantityPerCarton) || 0),
+      pricePerPiece: parseFloat(purchase.purchasePricePerPiece) || 0, // Use purchase price for selling price initially
+      pricePerCarton: parseFloat(purchase.purchasePricePerCarton) || 0, // Use purchase price for selling price initially
+      purchasePricePerPiece: parseFloat(purchase.purchasePricePerPiece) || 0,
+      purchasePricePerCarton: parseFloat(purchase.purchasePricePerCarton) || 0,
+      bulkUnit: 'Carton', // Add this line
       source: purchase.source || 'Purchase',
-      lastPurchaseDate: new Date().toISOString(),
+      lastPurchaseDate: purchase.purchaseDate || new Date().toISOString(),
+      minStockAlert: null, // Add this line
       databaseId: selectedDatabase ? selectedDatabase.id : null
     };
 
@@ -507,12 +516,17 @@ validateInventoryItem: (item) => {
   const required = ['itemName', 'cartonQuantity', 'quantityPerCarton', 'pricePerPiece'];
   const missing = required.filter(field => !item[field] && item[field] !== 0);
   
-  if (missing.length > 0) {
+   if (missing.length > 0) {
     throw new Error(`Missing required fields: ${missing.join(', ')}`);
   }
   
   if (item.cartonQuantity < 0 || item.quantityPerCarton < 0) {
     throw new Error('Quantities cannot be negative');
+  }
+  
+  // Add price validation
+  if (item.pricePerPiece < 0 || item.pricePerCarton < 0) {
+    throw new Error('Prices cannot be negative');
   }
   
   return true;

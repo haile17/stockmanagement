@@ -113,18 +113,17 @@ const RecordPopup = ({
   );
 
   const handleFieldChange = (field, value) => {
-    if (field === 'itemName' && onNameSearch) {
-      onNameSearch(value, formType);
-    } else if (field === 'cartonQuantity' && onQuantityChange) {
-      onQuantityChange(value, formType);
-    } else {
-      onFieldChange(field, value);
-    }
-  };
+  if (field === 'itemName' && onNameSearch) {
+    onNameSearch(value, formType);
+  } else {
+    // For all other fields, including quantityPerCarton, call the regular onFieldChange
+    onFieldChange(field, value);
+  }
+};
 
   const isFieldEditable = (field) => {
     const field_config = fields.find(f => f.key === field);
-    return field_config ? field_config.editable !== false : true;
+    return field_config ? (field_config.editable !== false) : true;
   };
 
   const shouldShowDropdown = (fieldKey) => {
@@ -233,7 +232,7 @@ const RecordPopup = ({
             {selectedItem && (formType === 'sale' || formType === 'credit') && (
               <View style={styles.selectedItemInfo}>
                 <Text style={styles.selectedItemText}>
-                  Selected: {selectedItem.itemName} (Available: {selectedItem.cartonQuantity} cartons)  {/* Changed both properties */}
+                  Selected: {selectedItem.itemName} (Available: {selectedItem.cartonQuantity} cartons)
                 </Text>
                 <Text style={styles.selectedItemSubText}>
                   {selectedItem.quantityPerCarton} pieces per carton - Original Price: ETB{selectedItem.pricePerPiece}/piece
@@ -283,27 +282,27 @@ const RecordPopup = ({
                  )}
                  
                  {shouldShowDropdown(field.key) && field.key === 'itemName' && showNameDropdown && filteredInventory.length > 0 && (
-                   <View style={styles.dropdown}>
-                     <ScrollView 
-                       style={[styles.dropdownList, { maxHeight: 150 }]}
-                       nestedScrollEnabled={true}
-                       showsVerticalScrollIndicator={true}
-                     >
-                       {filteredInventory.map((item, index) => (
-                          <TouchableOpacity
-                            key={`${item.itemName}-${index}`}  // Changed from item.name
-                            style={styles.dropdownItem}
-                            onPress={() => onSelectItem(item, formType)}
-                          >
-                            <Text style={styles.dropdownItemName}>{item.itemName}</Text>  {/* Changed from item.name */}
-                            <Text style={styles.dropdownItemDetails}>
-                              Qty: {item.cartonQuantity} cartons - {item.quantityPerCarton} pcs/carton - ETB{item.pricePerPiece}/pc
-                            </Text>
-                          </TouchableOpacity>
-                       ))}
-                     </ScrollView>
-                   </View>
-                 )}
+                      <View style={styles.dropdown}>
+                        <ScrollView 
+                          style={[styles.dropdownList, { maxHeight: 150 }]}
+                          nestedScrollEnabled={true}
+                          showsVerticalScrollIndicator={true}
+                        >
+                          {filteredInventory.map((item, index) => (
+                            <TouchableOpacity
+                              key={`${item.itemName}-${index}`}
+                              style={styles.dropdownItem}
+                              onPress={() => onSelectItem(item, formType)}
+                            >
+                              <Text style={styles.dropdownItemName}>{item.itemName}</Text>
+                              <Text style={styles.dropdownItemDetails}>
+                                Qty: {item.cartonQuantity} cartons - {item.quantityPerCarton} pcs/carton - ETB{item.pricePerPiece}/pc
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </ScrollView>
+                      </View>
+                    )}
                </View>
              </View>
            ))}

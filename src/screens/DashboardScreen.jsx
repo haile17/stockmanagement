@@ -96,80 +96,148 @@ function DashboardScreen({ navigation }) {
     }
   };
 
-  const selectInventoryItem = (item, formType) => {
+ const selectInventoryItem = (item, formType) => {
   if (formType === 'sale') {
     setSelectedItem(item);
-    handleFieldChange(formType, 'itemName', item.itemName);  // Changed from item.name
-    handleFieldChange(formType, 'quantityPerCarton', item.quantityPerCarton?.toString() || '');
-    handleFieldChange(formType, 'pricePerPiece', item.pricePerPiece?.toString() || '');
-    handleFieldChange(formType, 'pricePerCarton', item.pricePerCarton?.toString() || '');
+    const updatedItem = {
+      itemName: item.itemName,
+      itemCode: item.itemCode || '',
+      quantityPerCarton: item.quantityPerCarton?.toString() || '',
+      pricePerPiece: item.pricePerPiece?.toString() || '',
+      pricePerCarton: item.pricePerCarton?.toString() || '',
+      cartonQuantity: '1'
+    };
+    setSaleItem(updatedItem);
     setShowNameDropdown(false);
     setFilteredInventory([]);
   } else if (formType === 'credit') {
     setSelectedCreditItem(item);
-    handleFieldChange(formType, 'itemName', item.itemName);  // Changed from item.name
-    handleFieldChange(formType, 'quantityPerCarton', item.quantityPerCarton?.toString() || '');
-    handleFieldChange(formType, 'pricePerPiece', item.pricePerPiece?.toString() || '');
+    const updatedItem = {
+      itemName: item.itemName,
+      itemCode: item.itemCode || '',
+      quantityPerCarton: item.quantityPerCarton?.toString() || '',
+      pricePerPiece: item.pricePerPiece?.toString() || '',
+      cartonQuantity: '1'
+    };
+    setCreditItem(updatedItem);
     setShowCreditNameDropdown(false);
     setFilteredCreditInventory([]);
   }
 };
 
   const calculateTotals = (formType, field, value) => {
-    const currentItem = formType === 'sale' ? saleItem : (formType === 'credit' ? creditItem : purchaseItem);
-    let updatedItem = { ...currentItem, [field]: value };
+  const currentItem = formType === 'sale' ? saleItem : (formType === 'credit' ? creditItem : purchaseItem);
+  let updatedItem = { ...currentItem };
 
-    // Calculate totalQuantity when cartonQuantity or quantityPerCarton changes
-    if (field === 'cartonQuantity' || field === 'quantityPerCarton') {
-      const cartons = parseInt(updatedItem.cartonQuantity) || 0;
-      const perCarton = parseInt(updatedItem.quantityPerCarton) || 0;
-      updatedItem.totalQuantity = (cartons * perCarton).toString();
+  // Update the changed field first
+  updatedItem[field] = value;
+
+  // Calculate totalQuantity when cartonQuantity or quantityPerCarton changes
+  if (field === 'cartonQuantity' || field === 'quantityPerCarton') {
+    const cartons = parseInt(updatedItem.cartonQuantity) || 0;
+    const perCarton = parseInt(updatedItem.quantityPerCarton) || 0;
+    updatedItem.totalQuantity = (cartons * perCarton).toString();
+  }
+
+  // Calculate totalAmount for sales and credits
+  if (formType === 'sale' || formType === 'credit') {
+    const cartons = parseInt(updatedItem.cartonQuantity) || 0;
+    const perCarton = parseInt(updatedItem.quantityPerCarton) || 0;
+    const pricePerCarton = parseFloat(updatedItem.pricePerCarton) || 0;
+    const pricePerPiece = parseFloat(updatedItem.pricePerPiece) || 0;
+    
+    // Calculate based on which price is available
+    if (pricePerCarton > 0) {
+      updatedItem.totalAmount = (cartons * pricePerCarton).toString();
+    } else if (pricePerPiece > 0 && perCarton > 0) {
+      updatedItem.totalAmount = (cartons * perCarton * pricePerPiece).toString();
+      updatedItem.pricePerCarton = (perCarton * pricePerPiece).toString();
     }
+  }
 
-    // Calculate totalAmount for sales and credits
-    if (formType === 'sale' || formType === 'credit') {
-      if (field === 'cartonQuantity' || field === 'pricePerCarton') {
-        const cartons = parseInt(updatedItem.cartonQuantity) || 0;
-        const pricePerCarton = parseFloat(updatedItem.pricePerCarton) || 0;
-        updatedItem.totalAmount = (cartons * pricePerCarton).toString();
-      }
+  // Calculate totalAmount for purchases
+  if (formType === 'purchase') {
+    const cartons = parseInt(updatedItem.cartonQuantity) || 0;
+    const pricePerCarton = parseFloat(updatedItem.purchasePricePerCarton) || 0;
+    const pricePerPiece = parseFloat(updatedItem.purchasePricePerPiece) || 0;
+    const perCarton = parseInt(updatedItem.quantityPerCarton) || 0;
+    
+    if (pricePerCarton > 0) {
+      updatedItem.totalAmount = (cartons * pricePerCarton).toString();
+    } else if (pricePerPiece > 0 && perCarton > 0) {
+      updatedItem.totalAmount = (cartons * perCarton * pricePerPiece).toString();
+      updatedItem.purchasePricePerCarton = (perCarton * pricePerPiece).toString();
     }
+  }
 
-    // Calculate totalAmount for purchases
-    if (formType === 'purchase') {
-      if (field === 'cartonQuantity' || field === 'purchasePricePerCarton') {
-        const cartons = parseInt(updatedItem.cartonQuantity) || 0;
-        const pricePerCarton = parseFloat(updatedItem.purchasePricePerCarton) || 0;
-        updatedItem.totalAmount = (cartons * pricePerCarton).toString();
-      }
-    }
+  // Calculate remaining balance for credits
+  if (formType === 'credit' && (field === 'totalAmount' || field === 'amountPaid')) {
+    const total = parseFloat(updatedItem.totalAmount) || 0;
+    const paid = parseFloat(updatedItem.amountPaid) || 0;
+    updatedItem.remainingBalance = (total - paid).toString();
+  }
 
-    // Calculate remaining balance for credits
-    if (formType === 'credit' && (field === 'totalAmount' || field === 'amountPaid')) {
-      const total = parseFloat(updatedItem.totalAmount) || 0;
-      const paid = parseFloat(updatedItem.amountPaid) || 0;
-      updatedItem.remainingBalance = (total - paid).toString();
-    }
-
-    return updatedItem;
-  };
+  // Update the appropriate state
+  switch (formType) {
+    case 'sale':
+      setSaleItem(updatedItem);
+      break;
+    case 'purchase':
+      setPurchaseItem(updatedItem);
+      break;
+    case 'credit':
+      setCreditItem(updatedItem);
+      break;
+  }
+};
 
   const validateQuantity = (quantity, formType) => {
+  // Get the correct selected item based on form type
   const currentSelectedItem = formType === 'sale' ? selectedItem : selectedCreditItem;
   
-  if (!currentSelectedItem && (formType === 'sale' || formType === 'credit')) {
+  // Get the current form data
+  const currentFormData = formType === 'sale' ? saleItem : 
+                         formType === 'credit' ? creditItem : 
+                         purchaseItem;
+
+  // Skip inventory validation for purchases
+  if (formType === 'purchase') {
+    // Just update the form data with calculations
+    const updatedItem = calculateTotals(formType, 'cartonQuantity', quantity);
+    setPurchaseItem(updatedItem);
+    return true;
+  }
+
+  // Check if we have a selected item AND the item name matches (for sales and credits)
+  const hasValidSelection = currentSelectedItem && 
+                          currentFormData.itemName && 
+                          currentSelectedItem.itemName === currentFormData.itemName;
+
+  if ((formType === 'sale' || formType === 'credit') && !hasValidSelection) {
     showError('Error', 'Please select an item from inventory first');
     return false;
   }
-  
-  if (currentSelectedItem) {
-    const requestedQty = parseInt(quantity);
-    if (requestedQty > currentSelectedItem.cartonQuantity) {  // Changed from .quantity
+
+  if (hasValidSelection) {
+    const requestedCartons = parseInt(quantity) || 0;
+    
+    // Validate carton quantity doesn't exceed inventory
+    if (requestedCartons > currentSelectedItem.cartonQuantity) {
       showWarning('Insufficient Stock', `Only ${currentSelectedItem.cartonQuantity} cartons available in inventory`);
       return false;
     }
+    
+    // Validate quantity per carton if it exists in form data
+    if (formType === 'sale' && currentFormData.quantityPerCarton) {
+      const requestedPerCarton = parseInt(currentFormData.quantityPerCarton) || 0;
+      if (requestedPerCarton > currentSelectedItem.quantityPerCarton) {
+        showWarning('Invalid Quantity', `This item has ${currentSelectedItem.quantityPerCarton} pieces per carton in inventory`);
+        return false;
+      }
+    }
   }
   
+  // Update the form data with calculations
   const updatedItem = calculateTotals(formType, 'cartonQuantity', quantity);
   
   switch (formType) {
@@ -179,28 +247,84 @@ function DashboardScreen({ navigation }) {
     case 'credit':
       setCreditItem(updatedItem);
       break;
+    case 'purchase':
+      setPurchaseItem(updatedItem);
+      break;
   }
   
   return true;
 };
 
-  // Generic form field change handler
-  const handleFieldChange = (formType, field, value) => {
-    const updatedItem = calculateTotals(formType, field, value);
-    
-    switch (formType) {
-      case 'sale':
-        setSaleItem(updatedItem);
-        break;
-      case 'purchase':
-        setPurchaseItem(updatedItem);
-        break;
-      case 'credit':
-        setCreditItem(updatedItem);
-        break;
-    }
-  };
+const validateQuantityPerCarton = (quantity, formType) => {
+  // Skip validation for purchases
+  if (formType === 'purchase') {
+    return true;
+  }
 
+  const currentSelectedItem = formType === 'sale' ? selectedItem : selectedCreditItem;
+  const currentFormData = formType === 'sale' ? saleItem : creditItem;
+
+  if (!currentSelectedItem || !currentFormData.itemName) {
+    showError('Error', 'Please select an item from inventory first');
+    return false;
+  }
+
+  const requestedPerCarton = parseInt(quantity) || 0;
+  const inventoryPerCarton = currentSelectedItem.quantityPerCarton || 0;
+  
+  if (requestedPerCarton > inventoryPerCarton) {
+    showWarning('Note', `Inventory has ${inventoryPerCarton} pieces per carton, but you can enter a different value`);
+  }
+
+  return true;
+};
+  // Generic form field change handler
+ const handleFieldChange = (formType, field, value) => {
+  // First update the field value
+  let updatedItem;
+  
+  switch (formType) {
+    case 'sale':
+      updatedItem = {...saleItem, [field]: value};
+      setSaleItem(updatedItem);
+      break;
+    case 'purchase':
+      updatedItem = {...purchaseItem, [field]: value};
+      setPurchaseItem(updatedItem);
+      break;
+    case 'credit':
+      updatedItem = {...creditItem, [field]: value};
+      setCreditItem(updatedItem);
+      break;
+  }
+
+  // For purchase form, we don't need to validate against inventory
+  if (formType === 'purchase') {
+    // Calculate totals for any field change that might affect calculations
+    if (['cartonQuantity', 'quantityPerCarton', 'purchasePricePerCarton'].includes(field)) {
+      calculateTotals(formType, field, value);
+    }
+    return;
+  }
+
+  // For sale and credit forms, run the validations
+  if (field === 'cartonQuantity') {
+    validateQuantity(value, formType);
+  } else if (field === 'quantityPerCarton') {
+    validateQuantityPerCarton(value, formType);
+    const cartonQty = formType === 'sale' ? saleItem.cartonQuantity : 
+                     creditItem.cartonQuantity;
+    validateQuantity(cartonQty || '0', formType);
+  } else if (['pricePerCarton', 'pricePerPiece'].includes(field)) {
+    // Calculate totals when price fields change
+    calculateTotals(formType, field, value);
+  }
+
+  // Always calculate totals after changes for relevant fields
+  if (['cartonQuantity', 'quantityPerCarton', 'pricePerCarton', 'pricePerPiece'].includes(field)) {
+    calculateTotals(formType, field, value);
+  }
+};
   // Generic form reset
   const resetForm = (formType) => {
     switch (formType) {
@@ -222,10 +346,15 @@ function DashboardScreen({ navigation }) {
     }
   };
 
- const handleSaleSubmit = async () => {
+const handleSaleSubmit = async () => {
   try {
+    if (!selectedItem || !saleItem.itemName) {
+      showError('Error', 'Please select an item from inventory first');
+      return;
+    }
+
     const inventoryItem = inventory.find(item => 
-      item.itemName === saleItem.itemName  // Changed from item.name
+      item.itemName === saleItem.itemName
     );
     
     if (!inventoryItem) {
@@ -233,8 +362,13 @@ function DashboardScreen({ navigation }) {
       return;
     }
     
-    if (parseInt(saleItem.cartonQuantity) > inventoryItem.cartonQuantity) {  // Changed from .quantity
+    if (parseInt(saleItem.cartonQuantity) > inventoryItem.cartonQuantity) {
       showWarning('Insufficient Stock', `Only ${inventoryItem.cartonQuantity} cartons available`);
+      return;
+    }
+
+    if (parseInt(saleItem.quantityPerCarton) > inventoryItem.quantityPerCarton) {
+      showWarning('Invalid Quantity', `This item has ${inventoryItem.quantityPerCarton} pieces per carton in inventory`);
       return;
     }
     
@@ -253,62 +387,104 @@ function DashboardScreen({ navigation }) {
   }
 };
 
-  const handlePurchaseSubmit = () => {
-    try {
-      // Set current date if not provided
-      const purchaseData = {
-        ...purchaseItem,
-        purchaseDate: purchaseItem.purchaseDate || new Date().toISOString()
+  const handlePurchaseSubmit = async () => {
+  try {
+    const purchaseData = {
+      ...purchaseItem,
+      purchaseDate: purchaseItem.purchaseDate || new Date().toISOString()
+    };
+    
+    // First save the purchase record
+    await DataService.savePurchase(purchaseData);
+    
+    // Then update inventory
+    const inventoryItem = {
+      itemName: purchaseData.itemName,
+      itemCode: purchaseData.itemCode || '', // Add this line
+      cartonQuantity: parseInt(purchaseData.cartonQuantity) || 0,
+      quantityPerCarton: parseInt(purchaseData.quantityPerCarton) || 0,
+      totalQuantity: (parseInt(purchaseData.cartonQuantity) * parseInt(purchaseData.quantityPerCarton)) || 0,
+      pricePerPiece: parseFloat(purchaseData.purchasePricePerPiece) || 0,
+      pricePerCarton: parseFloat(purchaseData.purchasePricePerCarton) || 0,
+      purchasePricePerPiece: parseFloat(purchaseData.purchasePricePerPiece) || 0,
+      purchasePricePerCarton: parseFloat(purchaseData.purchasePricePerCarton) || 0,
+      bulkUnit: 'Carton', // Add this line
+      source: purchaseData.source || 'Manual Purchase',
+      lastPurchaseDate: purchaseData.purchaseDate || new Date().toISOString(),
+      minStockAlert: null // Add this line
+    };
+    
+    // Check if item already exists in inventory
+    const existingItemIndex = inventory.findIndex(item => item.itemName === inventoryItem.itemName);
+    
+    if (existingItemIndex !== -1) {
+      // Update existing item
+      const existingItem = inventory[existingItemIndex];
+      const updatedItem = {
+        ...existingItem,
+        cartonQuantity: existingItem.cartonQuantity + inventoryItem.cartonQuantity,
+        totalQuantity: existingItem.totalQuantity + inventoryItem.totalQuantity,
+        pricePerPiece: inventoryItem.pricePerPiece, // Update prices
+        pricePerCarton: inventoryItem.pricePerCarton,
+        purchasePricePerPiece: inventoryItem.purchasePricePerPiece,
+        purchasePricePerCarton: inventoryItem.purchasePricePerCarton,
+        lastPurchaseDate: inventoryItem.lastPurchaseDate
       };
-      
-      DataService.savePurchase(purchaseData);
-      setShowPurchasePopup(false);
-      resetForm('purchase');
-      loadDashboardData();
-      showSuccess('Success', 'Purchase recorded successfully');
-    } catch (error) {
-      showError('Error', error.message);
+      await DataService.saveInventoryItem(updatedItem);
+    } else {
+      // Add new item
+      await DataService.saveInventoryItem(inventoryItem);
     }
-  };
+    
+    setShowPurchasePopup(false);
+    resetForm('purchase');
+    await loadDashboardData(); // Make this await to ensure data is loaded
+    showSuccess('Success', 'Purchase recorded and inventory updated successfully');
+  } catch (error) {
+    console.error('Purchase submit error:', error); // Add error logging
+    showError('Error', error.message);
+  }
+};
 
-  const handleCreditSubmit = async () => {
-    try {
-      // Validate that item exists in inventory
-      const inventoryItem = inventory.find(item => 
-        item.name === creditItem.itemName
-      );
-      
-      if (!inventoryItem) {
-        showError('Item Not Found', 'This item is not in your inventory. Please add it to inventory first.');
-        return;
-      } 
-      
-      // Validate quantity
-      if (parseInt(creditItem.cartonQuantity) > inventoryItem.quantity) {
-        showWarning('Insufficient Stock', `Only ${inventoryItem.quantity} cartons available`);
-        return;
-      }
-      
-      // Set current date and payment status if not provided
-      const creditData = {
-        ...creditItem,
-        creditDate: creditItem.creditDate || new Date().toISOString(),
-        paymentStatus: creditItem.paymentStatus || 'Unpaid'
-      };
-      
-      await DataService.saveCreditSale(creditData);
-      setShowCreditPopup(false);
-      resetForm('credit');
-      loadDashboardData();
-      showSuccess('Success', 'Credit sale recorded successfully');
-    } catch (error) {
-      showError('Error', error.message);
+ const handleCreditSubmit = async () => {
+  try {
+    // Validate that item exists in inventory
+    const inventoryItem = inventory.find(item => 
+      item.itemName === creditItem.itemName  // Changed from item.name
+    );
+    
+    if (!inventoryItem) {
+      showError('Item Not Found', 'This item is not in your inventory. Please add it to inventory first.');
+      return;
+    } 
+    
+    // Validate quantity
+    if (parseInt(creditItem.cartonQuantity) > inventoryItem.cartonQuantity) {  // Changed from .quantity
+      showWarning('Insufficient Stock', `Only ${inventoryItem.cartonQuantity} cartons available`);
+      return;
     }
-  };
+    
+    // Set current date and payment status if not provided
+    const creditData = {
+      ...creditItem,
+      creditDate: creditItem.creditDate || new Date().toISOString(),
+      paymentStatus: creditItem.paymentStatus || 'Unpaid'
+    };
+    
+    await DataService.saveCreditSale(creditData);
+    setShowCreditPopup(false);
+    resetForm('credit');
+    loadDashboardData();
+    showSuccess('Success', 'Credit sale recorded successfully');
+  } catch (error) {
+    showError('Error', error.message);
+  }
+};
 
   // Form field configurations
   const saleFields = [
     { key: 'itemName', label: 'Item Name', placeholder: 'Enter item name', required: true },
+    { key: 'itemCode', label: 'Item Code', placeholder: 'Auto-filled from inventory', editable: false },
     { key: 'cartonQuantity', label: 'Carton Quantity', placeholder: 'Enter number of cartons', keyboardType: 'numeric', required: true },
     { key: 'quantityPerCarton', label: 'Quantity Per Carton', placeholder: 'Items per carton', keyboardType: 'numeric', required: true },
     { key: 'totalQuantity', label: 'Total Quantity (Pieces)', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
@@ -322,6 +498,7 @@ function DashboardScreen({ navigation }) {
 
   const purchaseFields = [
     { key: 'itemName', label: 'Item Name', placeholder: 'Enter item name', required: true },
+    { key: 'itemCode', label: 'Item Code', placeholder: 'Enter item code (optional)' },
     { key: 'cartonQuantity', label: 'Carton Quantity', placeholder: 'Enter number of cartons', keyboardType: 'numeric', required: true },
     { key: 'quantityPerCarton', label: 'Quantity Per Carton', placeholder: 'Items per carton', keyboardType: 'numeric', required: true },
     { key: 'totalQuantity', label: 'Total Quantity (Pieces)', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
@@ -333,13 +510,14 @@ function DashboardScreen({ navigation }) {
 
   const creditFields = [
     { key: 'itemName', label: 'Item Name', placeholder: 'Enter item name', required: true },
+    { key: 'itemCode', label: 'Item Code', placeholder: 'Auto-filled from inventory', editable: false },
     { key: 'cartonQuantity', label: 'Carton Quantity', placeholder: 'Enter number of cartons', keyboardType: 'numeric', required: true },
     { key: 'quantityPerCarton', label: 'Quantity Per Carton', placeholder: 'Items per carton', keyboardType: 'numeric', required: true },
     { key: 'totalQuantity', label: 'Total Quantity (Pieces)', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
     { key: 'pricePerPiece', label: 'Price Per Piece', placeholder: 'Enter price per piece', keyboardType: 'numeric', required: true },
     { key: 'totalAmount', label: 'Total Amount', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
     { key: 'amountPaid', label: 'Amount Paid', placeholder: 'Upfront payment', keyboardType: 'numeric' },
-    { key: 'remainingBalance', label: 'Remaining Balance', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+    { key: 'remainingBalance', label: 'Remaining Balance', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: true },
     { key: 'customerName', label: 'Customer Name', placeholder: 'Enter customer name', required: true },
     { key: 'phoneNumber', label: 'Phone Number', placeholder: 'Customer contact' },
     { key: 'plateNumber', label: 'Plate Number', placeholder: 'Vehicle plate number' },
@@ -446,7 +624,7 @@ function DashboardScreen({ navigation }) {
         formType="sale"
         onNameSearch={handleNameSearch}
         onSelectItem={selectInventoryItem}
-        onQuantityChange={validateQuantity}
+        onQuantityChange={(value) => validateQuantity(value, 'sale')}
         filteredInventory={filteredInventory}
         showNameDropdown={showNameDropdown}
         selectedItem={selectedItem}

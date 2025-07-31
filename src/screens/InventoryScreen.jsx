@@ -388,6 +388,7 @@ const InventoryScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       StatusBar.setHidden(true, 'fade');
+      loadInventory();
     }, [])
   );
 
@@ -489,27 +490,30 @@ const InventoryScreen = () => {
                 >
                   <ScrollView style={{ minHeight: 450, marginHorizontal: 0 }}>
                     <Table
-                      headers={["Status", "Item Name", "Code", "Cartons", "Per Carton", "Total Pcs", "Sell Price/Pc", "Buy Price/Pc", "Source", "Action"]}
-                      data={inventory.map((item, index) => [
-                        getStockStatusIcon(item),
-                        item.itemName || '', 
-                        item.itemCode || '', 
-                        (item.cartonQuantity || 0).toString(), 
-                        (item.quantityPerCarton || 0).toString(),
-                        (item.totalQuantity || 0).toString(),
-                        `ETB ${formatNumberWithCommas(item.pricePerPiece || 0)}`, 
-                        `ETB ${formatNumberWithCommas(item.purchasePricePerPiece || 0)}`, 
-                        item.source || '',
-                        <TouchableOpacity 
-                          key={index}
-                          onPress={() => confirmDeleteItem(index, item)}
-                          style={styles.deleteButton}
-                        >
-                          <Icon name="trash" size={16} color="#f44336" />
-                        </TouchableOpacity>
-                      ])}
-                      noDataMessage="No inventory data available"
-                    />
+                        headers={["Status", "Item Name", "Item Code", "Cartons", "Per Carton", "Total Pcs", "Sell Price/Pc", "Sell Price/Carton", "Buy Price/Pc", "Buy Price/Carton", "Source", "Last Purchase", "Action"]}
+                        data={inventory.map((item, index) => [
+                          getStockStatusIcon(item),
+                          item.itemName || '',
+                          item.itemCode || 'N/A',
+                          (item.cartonQuantity || 0).toString(), 
+                          (item.quantityPerCarton || 0).toString(),
+                          (item.totalQuantity || 0).toString(),
+                          `ETB ${formatNumberWithCommas(item.pricePerPiece || 0)}`, 
+                          `ETB ${formatNumberWithCommas(item.pricePerCarton || 0)}`,
+                          `ETB ${formatNumberWithCommas(item.purchasePricePerPiece || 0)}`, 
+                          `ETB ${formatNumberWithCommas(item.purchasePricePerCarton || 0)}`,
+                          item.source || '',
+                          item.lastPurchaseDate ? new Date(item.lastPurchaseDate).toLocaleDateString() : 'N/A',
+                          <TouchableOpacity 
+                            key={index}
+                            onPress={() => confirmDeleteItem(index, item)}
+                            style={styles.deleteButton}
+                          >
+                            <Icon name="trash" size={16} color="#f44336" />
+                          </TouchableOpacity>
+                        ])}
+                        noDataMessage="No inventory data available"
+                      />
                   </ScrollView>
                 </Animated.View>
               ) : (
