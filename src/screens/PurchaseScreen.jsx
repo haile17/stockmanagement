@@ -80,88 +80,103 @@ function PurchaseScreen() {
   };
 
   const calculateStatistics = (purchasesData) => {
-    const total = purchasesData.length;
-    const totalAmt = purchasesData.reduce((sum, purchase) => sum + (purchase.quantity * purchase.price), 0);
-    
-    const today = new Date().toISOString().split('T')[0];
-    const todayAmt = purchasesData
-      .filter(purchase => purchase.date && purchase.date.split('T')[0] === today)
-      .reduce((sum, purchase) => sum + (purchase.quantity * purchase.price), 0);
+  const total = purchasesData.length;
+  // Updated to use correct field names and calculation method
+  const totalAmt = purchasesData.reduce((sum, purchase) => {
+    const amount = parseFloat(purchase.totalAmount) || 
+                  (parseInt(purchase.cartonQuantity || 0) * parseFloat(purchase.purchasePricePerCarton || 0)) ||
+                  (parseInt(purchase.totalQuantity || 0) * parseFloat(purchase.purchasePricePerPiece || 0));
+    return sum + amount;
+  }, 0);
+  
+  const today = new Date().toISOString().split('T')[0];
+  const todayAmt = purchasesData
+    .filter(purchase => purchase.purchaseDate && purchase.purchaseDate.split('T')[0] === today) // Updated field name
+    .reduce((sum, purchase) => {
+      const amount = parseFloat(purchase.totalAmount) || 
+                    (parseInt(purchase.cartonQuantity || 0) * parseFloat(purchase.purchasePricePerCarton || 0)) ||
+                    (parseInt(purchase.totalQuantity || 0) * parseFloat(purchase.purchasePricePerPiece || 0));
+      return sum + amount;
+    }, 0);
 
-    setTotalPurchases(total);
-    setTotalAmount(totalAmt);
-    setTodaysAmount(todayAmt);
-  };
+  setTotalPurchases(total);
+  setTotalAmount(totalAmt);
+  setTodaysAmount(todayAmt);
+};
 
   const filterAndSortPurchases = () => {
-    let filtered = [...purchases];
+  let filtered = [...purchases];
 
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(purchase => 
-        (purchase.name && purchase.name.toLowerCase().includes(query)) ||
-        (purchase.partNumber && purchase.partNumber.toLowerCase().includes(query)) ||
-        (purchase.source && purchase.source.toLowerCase().includes(query))
-      );
+  // Apply search filter - Updated field names
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase();
+    filtered = filtered.filter(purchase => 
+      (purchase.itemName && purchase.itemName.toLowerCase().includes(query)) || // Changed from 'name'
+      (purchase.itemCode && purchase.itemCode.toLowerCase().includes(query)) || // Changed from 'partNumber'
+      (purchase.source && purchase.source.toLowerCase().includes(query))
+    );
+  }
+
+  // Apply date filter - Updated field name
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  switch (dateFilter) {
+    case 'today':
+      filtered = filtered.filter(purchase => {
+        const purchaseDate = new Date(purchase.purchaseDate); // Changed from 'date'
+        return purchaseDate >= today;
+      });
+      break;
+    case 'week':
+      filtered = filtered.filter(purchase => {
+        const purchaseDate = new Date(purchase.purchaseDate); // Changed from 'date'
+        return purchaseDate >= weekAgo;
+      });
+      break;
+    case 'month':
+      filtered = filtered.filter(purchase => {
+        const purchaseDate = new Date(purchase.purchaseDate); // Changed from 'date'
+        return purchaseDate >= monthAgo;
+      });
+      break;
+  }
+
+  // Apply sorting - Updated field names and calculation
+  filtered.sort((a, b) => {
+    let aValue, bValue;
+    
+    switch (sortBy) {
+      case 'source':
+        aValue = (a.source || '').toLowerCase();
+        bValue = (b.source || '').toLowerCase();
+        break;
+      case 'amount':
+        aValue = parseFloat(a.totalAmount) || 
+                (parseInt(a.cartonQuantity || 0) * parseFloat(a.purchasePricePerCarton || 0)) ||
+                (parseInt(a.totalQuantity || 0) * parseFloat(a.purchasePricePerPiece || 0));
+        bValue = parseFloat(b.totalAmount) || 
+                (parseInt(b.cartonQuantity || 0) * parseFloat(b.purchasePricePerCarton || 0)) ||
+                (parseInt(b.totalQuantity || 0) * parseFloat(b.purchasePricePerPiece || 0));
+        break;
+      case 'date':
+      default:
+        aValue = new Date(a.purchaseDate); // Changed from 'date'
+        bValue = new Date(b.purchaseDate);
+        break;
     }
 
-    // Apply date filter
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-    switch (dateFilter) {
-      case 'today':
-        filtered = filtered.filter(purchase => {
-          const purchaseDate = new Date(purchase.date);
-          return purchaseDate >= today;
-        });
-        break;
-      case 'week':
-        filtered = filtered.filter(purchase => {
-          const purchaseDate = new Date(purchase.date);
-          return purchaseDate >= weekAgo;
-        });
-        break;
-      case 'month':
-        filtered = filtered.filter(purchase => {
-          const purchaseDate = new Date(purchase.date);
-          return purchaseDate >= monthAgo;
-        });
-        break;
+    if (sortOrder === 'asc') {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
     }
+  });
 
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aValue, bValue;
-      
-      switch (sortBy) {
-        case 'source':
-          aValue = (a.source || '').toLowerCase();
-          bValue = (b.source || '').toLowerCase();
-          break;
-        case 'amount':
-          aValue = a.quantity * a.price;
-          bValue = b.quantity * b.price;
-          break;
-        case 'date':
-        default:
-          aValue = new Date(a.date);
-          bValue = new Date(b.date);
-          break;
-      }
-
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-    setFilteredPurchases(filtered);
-  };
+  setFilteredPurchases(filtered);
+};
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -193,17 +208,22 @@ function PurchaseScreen() {
   };
 
   const handleDelete = (purchase) => {
-    setPurchaseToDelete(purchase);
-    setModalMessage(
-      `Are you sure you want to delete this purchase?\n\n` +
-      `Item: ${purchase.name}\n` +
-      `Quantity: ${purchase.quantity}\n` +
-      `Amount: ${formatNumberWithCommas(purchase.quantity * purchase.price)} Birr\n` +
-      `Source: ${purchase.source || 'N/A'}\n\n` +
-      `This action cannot be undone.`
-    );
-    setIsModalOpen(true);
-  };
+  setPurchaseToDelete(purchase);
+  // Updated to use correct field names and calculation
+  const purchaseAmount = parseFloat(purchase.totalAmount) || 
+                        (parseInt(purchase.cartonQuantity || 0) * parseFloat(purchase.purchasePricePerCarton || 0)) ||
+                        (parseInt(purchase.totalQuantity || 0) * parseFloat(purchase.purchasePricePerPiece || 0));
+  
+  setModalMessage(
+    `Are you sure you want to delete this purchase?\n\n` +
+    `Item: ${purchase.itemName || 'N/A'}\n` + // Changed from 'name'
+    `Quantity: ${purchase.cartonQuantity || purchase.totalQuantity || 0}\n` + // Updated quantity field
+    `Amount: ${formatNumberWithCommas(purchaseAmount)} Birr\n` +
+    `Source: ${purchase.source || 'N/A'}\n\n` +
+    `This action cannot be undone.`
+  );
+  setIsModalOpen(true);
+};
 
   const handleConfirm = async () => {
     if (purchaseToDelete) {
@@ -248,24 +268,29 @@ function PurchaseScreen() {
     </TouchableOpacity>
   );
 
-  const renderPurchaseItem = ({ item, index }) => (
+  const renderPurchaseItem = ({ item, index }) => {
+  // Updated to calculate amount correctly and use proper field names
+  const purchaseAmount = parseFloat(item.totalAmount) || 
+                        (parseInt(item.cartonQuantity || 0) * parseFloat(item.purchasePricePerCarton || 0)) ||
+                        (parseInt(item.totalQuantity || 0) * parseFloat(item.purchasePricePerPiece || 0));
+  
+  return (
     <View style={[styles.saleItem, index % 2 === 0 && styles.saleItemEven]}>
       <View style={styles.saleHeader}>
-        <Text style={styles.saleDate}>{formatDate(item.date)}</Text>
+        <Text style={styles.saleDate}>{formatDate(item.purchaseDate || item.date) || 'No Date'}</Text>
         <Text style={styles.saleAmount}>
-          {formatNumberWithCommas(item.quantity * item.price)} Birr
+          {formatNumberWithCommas(purchaseAmount) || '0'} Birr
         </Text>
       </View>
       
       <View style={styles.saleDetails}>
         <View style={styles.saleInfo}>
-          <Text style={styles.itemName}>{item.name || 'N/A'}</Text>
+          <Text style={styles.itemName}>{item.itemName || item.name || 'N/A'}</Text>
           <Text style={styles.itemDetails}>
-            Part: {item.partNumber || 'N/A'} | Qty: {formatNumberWithCommas(item.quantity)} | 
-            
+            Code: {item.itemCode || item.partNumber || 'N/A'} | Qty: {formatNumberWithCommas(item.cartonQuantity || item.totalQuantity || item.quantity || 0)}
           </Text>
-          <Text style={styles.itemPrice} >
-          Price: {formatNumberWithCommas(item.price)} Birr
+          <Text style={styles.itemPrice}>
+            Price: {formatNumberWithCommas(item.purchasePricePerPiece || item.purchasePricePerCarton || item.price || 0)} Birr
           </Text>
           {item.source && (
             <Text style={styles.customerName}>Source: {item.source}</Text>
@@ -284,6 +309,7 @@ function PurchaseScreen() {
       </View>
     </View>
   );
+};
 
   const renderEmptyList = () => (
     <View style={styles.emptyContainer}>
@@ -333,7 +359,7 @@ function PurchaseScreen() {
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search by item name, part number, or source..."
+          placeholder="Search by item name, item code, or source..."
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor="#8DA9A4"

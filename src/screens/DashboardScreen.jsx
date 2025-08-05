@@ -497,15 +497,24 @@ const handleSaleSubmit = async () => {
   ];
 
   const purchaseFields = [
-    { key: 'itemName', label: 'Item Name', placeholder: 'Enter item name', required: true },
-    { key: 'itemCode', label: 'Item Code', placeholder: 'Enter item code (optional)' },
-    { key: 'cartonQuantity', label: 'Carton Quantity', placeholder: 'Enter number of cartons', keyboardType: 'numeric', required: true },
-    { key: 'quantityPerCarton', label: 'Quantity Per Carton', placeholder: 'Items per carton', keyboardType: 'numeric', required: true },
-    { key: 'totalQuantity', label: 'Total Quantity (Pieces)', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
-    { key: 'purchasePricePerPiece', label: 'Purchase Price Per Piece', placeholder: 'Enter purchase price per piece', keyboardType: 'numeric', required: true },
-    { key: 'purchasePricePerCarton', label: 'Purchase Price Per Carton', placeholder: 'Enter purchase price per carton', keyboardType: 'numeric', required: true },
-    { key: 'totalAmount', label: 'Total Amount', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
-    { key: 'source', label: 'Source', placeholder: 'Supplier/origin' },
+  // Basic Item Information
+  { key: 'itemName', label: 'Item Name', placeholder: 'Enter item name', required: true },
+  { key: 'itemCode', label: 'Item Code', placeholder: 'Enter item code (optional)' },
+  
+  // Quantity Information
+  { key: 'cartonQuantity', label: 'Carton Quantity', placeholder: 'Enter number of cartons', keyboardType: 'numeric', required: true },
+  { key: 'quantityPerCarton', label: 'Quantity Per Carton', placeholder: 'Items per carton', keyboardType: 'numeric', required: true },
+  { key: 'totalQuantity', label: 'Total Quantity (Pieces)', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+  
+  // Purchase Pricing (what you pay to supplier)
+  { key: 'purchasePricePerPiece', label: 'Purchase Price Per Piece', placeholder: 'Enter purchase price per piece', keyboardType: 'numeric', required: true },
+  { key: 'purchasePricePerCarton', label: 'Purchase Price Per Carton', placeholder: 'Enter purchase price per carton', keyboardType: 'numeric', required: true },
+  { key: 'totalAmount', label: 'Total Purchase Amount', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+  
+  // Additional Information
+  { key: 'source', label: 'Source/Supplier', placeholder: 'Supplier name or origin', required: true },
+  { key: 'bulkUnit', label: 'Bulk Unit', placeholder: 'e.g., Carton, Box, Pack', defaultValue: 'Carton' },
+  { key: 'minStockAlert', label: 'Minimum Stock Alert', placeholder: 'Alert when cartons fall below this number', keyboardType: 'numeric' },
   ];
 
   const creditFields = [

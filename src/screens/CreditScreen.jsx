@@ -79,90 +79,107 @@ function CreditScreen() {
     }
   };
 
-  const calculateStatistics = (creditsData) => {
-    const total = creditsData.length;
-    const totalAmt = creditsData.reduce((sum, credit) => sum + (credit.quantity * credit.price), 0);
-    
-    const today = new Date().toISOString().split('T')[0];
-    const todayAmt = creditsData
-      .filter(credit => credit.date && credit.date.split('T')[0] === today)
-      .reduce((sum, credit) => sum + (credit.quantity * credit.price), 0);
+ const calculateStatistics = (creditsData) => {
+  const total = creditsData.length;
+  // Updated to use correct field names and calculation method
+  const totalAmt = creditsData.reduce((sum, credit) => {
+    const amount = parseFloat(credit.totalAmount) || 
+                  (parseInt(credit.cartonQuantity || 0) * parseFloat(credit.pricePerCarton || 0)) ||
+                  (parseInt(credit.totalQuantity || 0) * parseFloat(credit.pricePerPiece || 0));
+    return sum + amount;
+  }, 0);
+  
+  const today = new Date().toISOString().split('T')[0];
+  const todayAmt = creditsData
+    .filter(credit => credit.creditDate && credit.creditDate.split('T')[0] === today) // Updated field name
+    .reduce((sum, credit) => {
+      const amount = parseFloat(credit.totalAmount) || 
+                    (parseInt(credit.cartonQuantity || 0) * parseFloat(credit.pricePerCarton || 0)) ||
+                    (parseInt(credit.totalQuantity || 0) * parseFloat(credit.pricePerPiece || 0));
+      return sum + amount;
+    }, 0);
 
-    setTotalCredits(total);
-    setTotalAmount(totalAmt);
-    setTodaysAmount(todayAmt);
-  };
+  setTotalCredits(total);
+  setTotalAmount(totalAmt);
+  setTodaysAmount(todayAmt);
+};
 
   const filterAndSortCredits = () => {
-    let filtered = [...credits];
+  let filtered = [...credits];
 
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(credit => 
-        (credit.name && credit.name.toLowerCase().includes(query)) ||
-        (credit.partNumber && credit.partNumber.toLowerCase().includes(query)) ||
-        (credit.customer && credit.customer.toLowerCase().includes(query))
-      );
+  // Apply search filter - Handle both old and new field names
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase();
+    filtered = filtered.filter(credit => 
+      (credit.itemName && credit.itemName.toLowerCase().includes(query)) ||
+      (credit.name && credit.name.toLowerCase().includes(query)) || // Fallback for old data
+      (credit.itemCode && credit.itemCode.toLowerCase().includes(query)) ||
+      (credit.partNumber && credit.partNumber.toLowerCase().includes(query)) || // Fallback for old data
+      (credit.customerName && credit.customerName.toLowerCase().includes(query)) ||
+      (credit.customer && credit.customer.toLowerCase().includes(query)) // Fallback for old data
+    );
+  }
+
+  // Apply date filter - Handle both old and new field names
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  switch (dateFilter) {
+    case 'today':
+      filtered = filtered.filter(credit => {
+        const creditDate = new Date(credit.creditDate || credit.date);
+        return creditDate >= today;
+      });
+      break;
+    case 'week':
+      filtered = filtered.filter(credit => {
+        const creditDate = new Date(credit.creditDate || credit.date);
+        return creditDate >= weekAgo;
+      });
+      break;
+    case 'month':
+      filtered = filtered.filter(credit => {
+        const creditDate = new Date(credit.creditDate || credit.date);
+        return creditDate >= monthAgo;
+      });
+      break;
+  }
+
+  // Apply sorting - Handle both old and new field names
+  filtered.sort((a, b) => {
+    let aValue, bValue;
+    
+    switch (sortBy) {
+      case 'customer':
+        aValue = (a.customerName || a.customer || '').toLowerCase();
+        bValue = (b.customerName || b.customer || '').toLowerCase();
+        break;
+      case 'amount':
+        aValue = parseFloat(a.totalAmount) || 
+                (parseInt(a.cartonQuantity || a.quantity || 0) * parseFloat(a.pricePerCarton || a.price || 0)) ||
+                (parseInt(a.totalQuantity || 0) * parseFloat(a.pricePerPiece || 0));
+        bValue = parseFloat(b.totalAmount) || 
+                (parseInt(b.cartonQuantity || b.quantity || 0) * parseFloat(b.pricePerCarton || b.price || 0)) ||
+                (parseInt(b.totalQuantity || 0) * parseFloat(b.pricePerPiece || 0));
+        break;
+      case 'date':
+      default:
+        aValue = new Date(a.creditDate || a.date);
+        bValue = new Date(b.creditDate || b.date);
+        break;
     }
 
-    // Apply date filter
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-    switch (dateFilter) {
-      case 'today':
-        filtered = filtered.filter(credit => {
-          const creditDate = new Date(credit.date);
-          return creditDate >= today;
-        });
-        break;
-      case 'week':
-        filtered = filtered.filter(credit => {
-          const creditDate = new Date(credit.date);
-          return creditDate >= weekAgo;
-        });
-        break;
-      case 'month':
-        filtered = filtered.filter(credit => {
-          const creditDate = new Date(credit.date);
-          return creditDate >= monthAgo;
-        });
-        break;
+    if (sortOrder === 'asc') {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
     }
+  });
 
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aValue, bValue;
-      
-      switch (sortBy) {
-        case 'customer':
-          aValue = (a.customer || '').toLowerCase();
-          bValue = (b.customer || '').toLowerCase();
-          break;
-        case 'amount':
-          aValue = a.quantity * a.price;
-          bValue = b.quantity * b.price;
-          break;
-        case 'date':
-        default:
-          aValue = new Date(a.date);
-          bValue = new Date(b.date);
-          break;
-      }
-
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-    setFilteredCredits(filtered);
-  };
-
+  setFilteredCredits(filtered);
+};
   const onRefresh = async () => {
     setRefreshing(true);
     await loadCredits();
@@ -195,42 +212,30 @@ function CreditScreen() {
   // Add this new function after handleConfirm
 const handleMarkAsPaid = async (credit) => {
   try {
-    // Convert credit to sale
-    const saleData = {
-      name: credit.name,
-      partNumber: credit.partNumber,
-      quantity: credit.quantity,
-      price: credit.price,
-      customer: credit.customer,
-      date: new Date().toISOString(),
-      databaseId: credit.databaseId
-    };
-    
-    // Save as sale
-    await DataService.saveSale(saleData);
-    
-    // Remove from credits
-    await DataService.deleteCreditSale(credit.id);
-    
+    await DataService.transferCreditToSale(credit.id);
     showSuccess('Success', 'Credit sale marked as paid and moved to sales records.');
     await loadCredits();
   } catch (error) {
     showError('Error', 'Failed to mark credit as paid: ' + error.message);
   }
 };
-
-  const handleReturn = (credit) => {
-    setCreditToReturn(credit);
-    setModalMessage(
-      `Are you sure you want to return this credit sale?\n\n` +
-      `Item: ${credit.name}\n` +
-      `Quantity: ${credit.quantity}\n` +
-      `Amount: ${formatNumberWithCommas(credit.quantity * credit.price)} Birr\n` +
-      `Customer: ${credit.customer || 'N/A'}\n\n` +
-      `This will add the items back to inventory.`
-    );
-    setIsModalOpen(true);
-  };
+ const handleReturn = (credit) => {
+  setCreditToReturn(credit);
+  // Updated to use correct field names and calculation
+  const creditAmount = parseFloat(credit.totalAmount) || 
+                      (parseInt(credit.cartonQuantity || 0) * parseFloat(credit.pricePerCarton || 0)) ||
+                      (parseInt(credit.totalQuantity || 0) * parseFloat(credit.pricePerPiece || 0));
+  
+  setModalMessage(
+    `Are you sure you want to return this credit sale?\n\n` +
+    `Item: ${credit.itemName || 'N/A'}\n` + // Changed from 'name'
+    `Quantity: ${credit.cartonQuantity || credit.totalQuantity || 0}\n` + // Updated quantity field
+    `Amount: ${formatNumberWithCommas(creditAmount)} Birr\n` +
+    `Customer: ${credit.customerName || 'N/A'}\n\n` + // Changed from 'customer'
+    `This will add the items back to inventory.`
+  );
+  setIsModalOpen(true);
+};
 
   const handleConfirm = async () => {
     if (creditToReturn) {
@@ -275,52 +280,63 @@ const handleMarkAsPaid = async (credit) => {
     </TouchableOpacity>
   );
 
-  const renderCreditItem = ({ item, index }) => (
+  const renderCreditItem = ({ item, index }) => {
+  // Updated to calculate amount correctly and use proper field names
+  const creditAmount = parseFloat(item.totalAmount) || 
+                      (parseInt(item.cartonQuantity || 0) * parseFloat(item.pricePerCarton || 0)) ||
+                      (parseInt(item.totalQuantity || 0) * parseFloat(item.pricePerPiece || 0));
+  
+  return (
     <View style={[styles.saleItem, index % 2 === 0 && styles.saleItemEven]}>
       <View style={styles.saleHeader}>
-        <Text style={styles.saleDate}>{formatDate(item.date)}</Text>
+        <Text style={styles.saleDate}>{formatDate(item.creditDate || item.date) || 'No Date'}</Text>
         <Text style={styles.saleAmount}>
-          {formatNumberWithCommas(item.quantity * item.price)} Birr
+          {formatNumberWithCommas(creditAmount) || '0'} Birr
         </Text>
       </View>
       
       <View style={styles.saleDetails}>
         <View style={styles.saleInfo}>
-          <Text style={styles.itemName}>{item.name || 'N/A'}</Text>
+          <Text style={styles.itemName}>{item.itemName || 'N/A'}</Text>
           <Text style={styles.itemDetails}>
-            Part: {item.partNumber || 'N/A'} | Qty: {formatNumberWithCommas(item.quantity)} | 
-           
+            Code: {item.itemCode || 'N/A'} | Qty: {formatNumberWithCommas(item.cartonQuantity || item.totalQuantity || 0)}
           </Text>
-          <Text style={styles.itemPrice} >
-           Price: {formatNumberWithCommas(item.price)} Birr
-           </Text>
-          {item.customer && (
-            <Text style={styles.customerName}>Customer: {item.customer}</Text>
+          <Text style={styles.itemPrice}>
+            Price: {formatNumberWithCommas(item.pricePerPiece || item.pricePerCarton || 0)} Birr
+          </Text>
+          {(item.customerName || item.customer) && (
+            <Text style={styles.customerName}>Customer: {item.customerName || item.customer}</Text>
           )}
           <Text style={[styles.customerName, { color: '#FF9500' }]}>
-            Status: {item.status || 'Pending'}
+            Status: {item.paymentStatus || item.status || 'Pending'}
           </Text>
+          {item.remainingBalance && parseFloat(item.remainingBalance) > 0 && (
+            <Text style={[styles.customerName, { color: '#FF3B30' }]}>
+              Balance: {formatNumberWithCommas(item.remainingBalance)} Birr
+            </Text>
+          )}
         </View>
         
         <View style={styles.saleActions}>
-        <Button
-          type="primary"
-          size="xs"
-          title="Mark Paid"
-          onPress={() => handleMarkAsPaid(item)}
-          style={[styles.returnButton, { marginRight: 8 }]}
-        />
-        <Button
-          type="danger"
-          size="xs"
-          title="Return"
-          onPress={() => handleReturn(item)}
-          style={styles.returnButton}
-        />
-      </View>
+          <Button
+            type="primary"
+            size="xs"
+            title="Mark Paid"
+            onPress={() => handleMarkAsPaid(item)}
+            style={[styles.returnButton, { marginRight: 8 }]}
+          />
+          <Button
+            type="danger"
+            size="xs"
+            title="Return"
+            onPress={() => handleReturn(item)}
+            style={styles.returnButton}
+          />
+        </View>
       </View>
     </View>
   );
+};
 
   const renderEmptyList = () => (
     <View style={styles.emptyContainer}>

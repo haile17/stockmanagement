@@ -89,24 +89,28 @@ export const DataService = {
 },
 
   updateInventoryItem: async (itemName, updatedItem) => {
-    const selectedDatabase = JSON.parse(await AsyncStorage.getItem('selectedInventoryDatabase'));
-    const inventory = await DataService.getInventory();
-    const index = inventory.findIndex(
-      (item) => item.itemName === itemName && 
-      item.databaseId === (selectedDatabase ? selectedDatabase.id : null)
-    );
+  const selectedDatabase = JSON.parse(await AsyncStorage.getItem('selectedInventoryDatabase'));
+  const inventory = await DataService.getInventory();
+  const index = inventory.findIndex(
+    (item) => item.itemName === itemName && 
+    item.databaseId === (selectedDatabase ? selectedDatabase.id : null)
+  );
 
-    if (index !== -1) {
-      inventory[index] = {
-        ...inventory[index],
-        ...updatedItem,
-        totalQuantity: (updatedItem.cartonQuantity || inventory[index].cartonQuantity) * 
-                     (updatedItem.quantityPerCarton || inventory[index].quantityPerCarton)
-      };
-      await AsyncStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
-    }
-    return inventory;
-  },
+  if (index !== -1) {
+    const updatedCartonQty = updatedItem.cartonQuantity || inventory[index].cartonQuantity;
+    const updatedPricePerCarton = updatedItem.purchasePricePerCarton || inventory[index].purchasePricePerCarton;
+    
+    inventory[index] = {
+      ...inventory[index],
+      ...updatedItem,
+      totalQuantity: updatedCartonQty * (updatedItem.quantityPerCarton || inventory[index].quantityPerCarton),
+      // Auto-calculate totalAmount when carton quantity or price changes
+      totalAmount: updatedCartonQty * updatedPricePerCarton
+    };
+    await AsyncStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
+  }
+  return inventory;
+},
 
   updateInventoryItemQuantity: async (itemName, newQuantity) => {
     const selectedDatabase = JSON.parse(await AsyncStorage.getItem('selectedInventoryDatabase'));
@@ -285,25 +289,76 @@ export const DataService = {
     purchases.push(newPurchase);
     await AsyncStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
 
-    // Update inventory with proper error handling - MODIFIED SECTION
-    const inventoryItem = {
-      itemName: purchase.itemName,
-      itemCode: purchase.itemCode || '', // Add this line
-      cartonQuantity: parseInt(purchase.cartonQuantity) || 0, // Ensure integer
-      quantityPerCarton: parseInt(purchase.quantityPerCarton) || 0, // Ensure integer
-      totalQuantity: (parseInt(purchase.cartonQuantity) || 0) * (parseInt(purchase.quantityPerCarton) || 0),
-      pricePerPiece: parseFloat(purchase.purchasePricePerPiece) || 0, // Use purchase price for selling price initially
-      pricePerCarton: parseFloat(purchase.purchasePricePerCarton) || 0, // Use purchase price for selling price initially
-      purchasePricePerPiece: parseFloat(purchase.purchasePricePerPiece) || 0,
-      purchasePricePerCarton: parseFloat(purchase.purchasePricePerCarton) || 0,
-      bulkUnit: 'Carton', // Add this line
-      source: purchase.source || 'Purchase',
-      lastPurchaseDate: purchase.purchaseDate || new Date().toISOString(),
-      minStockAlert: null, // Add this line
-      databaseId: selectedDatabase ? selectedDatabase.id : null
-    };
+    // Check if item already exists in inventory
+    const existingInventory = await DataService.getInventory();
+    const existingItem = existingInventory.find(item => 
+      item.itemName.toLowerCase() === purchase.itemName.toLowerCase() && 
+      item.databaseId === (selectedDatabase ? selectedDatabase.id : null)
+    );
 
-    await DataService.saveInventoryItem(inventoryItem);
+    const purchasedCartons = parseInt(purchase.cartonQuantity) || 0;
+    const quantityPerCarton = parseInt(purchase.quantityPerCarton) || 0;
+
+    if (existingItem) {
+      // UPDATE existing inventory item (add to existing stock)
+      const updatedInventoryItem = {
+        // Add new purchase quantities to existing stock
+        cartonQuantity: (existingItem.cartonQuantity || 0) + purchasedCartons,
+        quantityPerCarton: quantityPerCarton, // Keep consistent
+        // totalQuantity will be auto-calculated by your updateInventoryItem method
+        
+        // Update prices with latest purchase prices
+        purchasePricePerPiece: parseFloat(purchase.purchasePricePerPiece) || 0,
+        purchasePricePerCarton: parseFloat(purchase.purchasePricePerCarton) || 0,
+        
+        // Keep or update selling prices (from the purchase form)
+        pricePerPiece: parseFloat(purchase.pricePerPiece) || existingItem.pricePerPiece || 0,
+        pricePerCarton: parseFloat(purchase.pricePerCarton) || existingItem.pricePerCarton || 0,
+        
+        // Calculate total amount for this updated inventory
+        totalAmount: ((existingItem.cartonQuantity || 0) + purchasedCartons) * (parseFloat(purchase.purchasePricePerCarton) || 0),
+        
+        // Update other fields
+        source: purchase.source || existingItem.source || 'Purchase',
+        lastPurchaseDate: purchase.purchaseDate || new Date().toISOString(),
+        bulkUnit: purchase.bulkUnit || existingItem.bulkUnit || 'Carton',
+        minStockAlert: purchase.minStockAlert ? parseInt(purchase.minStockAlert) : (existingItem.minStockAlert || null),
+        itemCode: purchase.itemCode || existingItem.itemCode || '',
+      };
+
+      // Use your existing updateInventoryItem method
+      await DataService.updateInventoryItem(purchase.itemName, updatedInventoryItem);
+      
+    } else {
+      // CREATE new inventory item
+      const inventoryItem = {
+        itemName: purchase.itemName,
+        itemCode: purchase.itemCode || '',
+        cartonQuantity: purchasedCartons,
+        quantityPerCarton: quantityPerCarton,
+        totalQuantity: purchasedCartons * quantityPerCarton, // Will be recalculated anyway
+        
+        // Purchase prices (what you paid)
+        purchasePricePerPiece: parseFloat(purchase.purchasePricePerPiece) || 0,
+        purchasePricePerCarton: parseFloat(purchase.purchasePricePerCarton) || 0,
+        totalAmount: parseFloat(purchase.totalAmount) || (purchasedCartons * (parseFloat(purchase.purchasePricePerCarton) || 0)),
+        
+        // Selling prices (what you'll sell for)
+        pricePerPiece: parseFloat(purchase.pricePerPiece) || 0,
+        pricePerCarton: parseFloat(purchase.pricePerCarton) || 0,
+        
+        // Additional fields
+        bulkUnit: purchase.bulkUnit || 'Carton',
+        source: purchase.source || 'Purchase',
+        lastPurchaseDate: purchase.purchaseDate || new Date().toISOString(),
+        minStockAlert: purchase.minStockAlert ? parseInt(purchase.minStockAlert) : null,
+        databaseId: selectedDatabase ? selectedDatabase.id : null,
+        id: Date.now().toString() + '_inv' // Unique ID for inventory item
+      };
+
+      await DataService.saveInventoryItem(inventoryItem);
+    }
+
     return newPurchase;
   } catch (error) {
     console.error('Error saving purchase:', error);
