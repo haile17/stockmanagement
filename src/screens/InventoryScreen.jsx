@@ -8,8 +8,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import { CircleFade } from 'react-native-animated-spinkit';
 import InventoryImporter from './inventory/InventoryImporter';
 import InventoryTable from './inventory/InventoryTable';
+import Header from '../components/Header';
 
-const InventoryScreen = () => {
+const InventoryScreen = ({ onToggleDrawer }) => {
   const [inventory, setInventory] = useState([]);
   const [inventoryLoading, setInventoryLoading] = useState(true);
   const [screenReady, setScreenReady] = useState(false);
@@ -83,10 +84,19 @@ const InventoryScreen = () => {
       imageStyle={{ opacity: 0.2 }}
       resizeMode='cover'
     >
+      <Header 
+        onToggleDrawer={onToggleDrawer} 
+        iconColor="#ffffff" // White icon for dark background
+        backgroundColor="transparent"
+      />
       {screenReady ? (  
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ 
+            flexGrow: 1,
+            paddingBottom: 20,
+            paddingTop: 50
+          }}
+          keyboardShouldPersistTaps="handled"  
         >
           <View style={[styles.container, { padding: 20 }]}>
             {/* Custom Modal Component */}

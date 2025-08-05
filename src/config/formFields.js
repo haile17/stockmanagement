@@ -1,0 +1,46 @@
+export const saleFields = [
+  { key: 'itemName', label: 'Item Name', placeholder: 'Enter item name', required: true },
+  { key: 'itemCode', label: 'Item Code', placeholder: 'Auto-filled from inventory', editable: false },
+  { key: 'cartonQuantity', label: 'Carton Quantity', placeholder: 'Enter number of cartons', keyboardType: 'numeric', required: true },
+  { key: 'quantityPerCarton', label: 'Quantity Per Carton', placeholder: 'Items per carton', keyboardType: 'numeric', required: true },
+  { key: 'totalQuantity', label: 'Total Quantity (Pieces)', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+  { key: 'pricePerPiece', label: 'Price Per Piece', placeholder: 'Enter price per piece', keyboardType: 'numeric', required: true },
+  { key: 'pricePerCarton', label: 'Price Per Carton', placeholder: 'Enter price per carton', keyboardType: 'numeric', required: true },
+  { key: 'totalAmount', label: 'Total Amount', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+  { key: 'plateNumber', label: 'Plate Number', placeholder: 'Vehicle plate number' },
+  { key: 'place', label: 'Place', placeholder: 'Sale/delivery location' },
+  { key: 'paymentMethod', label: 'Payment Method', placeholder: 'Cash/Credit/Transfer' },
+];
+
+export const purchaseFields = [
+  { key: 'itemName', label: 'Item Name', placeholder: 'Enter item name', required: true },
+  { key: 'itemCode', label: 'Item Code', placeholder: 'Enter item code (optional)' },
+  { key: 'cartonQuantity', label: 'Carton Quantity', placeholder: 'Enter number of cartons', keyboardType: 'numeric', required: true },
+  { key: 'quantityPerCarton', label: 'Quantity Per Carton', placeholder: 'Items per carton', keyboardType: 'numeric', required: true },
+  { key: 'totalQuantity', label: 'Total Quantity (Pieces)', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+  { key: 'purchasePricePerPiece', label: 'Purchase Price Per Piece', placeholder: 'Enter purchase price per piece', keyboardType: 'numeric', required: true },
+  { key: 'purchasePricePerCarton', label: 'Purchase Price Per Carton', placeholder: 'Enter purchase price per carton', keyboardType: 'numeric', required: true },
+  { key: 'totalAmount', label: 'Total Purchase Amount', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+  { key: 'source', label: 'Source/Supplier', placeholder: 'Supplier name or origin', required: true },
+  { key: 'bulkUnit', label: 'Bulk Unit', placeholder: 'e.g., Carton, Box, Pack', defaultValue: 'Carton' },
+  { key: 'minStockAlert', label: 'Minimum Stock Alert', placeholder: 'Alert when cartons fall below this number', keyboardType: 'numeric' },
+];
+
+export const creditFields = [
+  { key: 'itemName', label: 'Item Name', placeholder: 'Enter item name', required: true },
+  { key: 'itemCode', label: 'Item Code', placeholder: 'Auto-filled from inventory', editable: false },
+  { key: 'cartonQuantity', label: 'Carton Quantity', placeholder: 'Enter number of cartons', keyboardType: 'numeric', required: true },
+  { key: 'quantityPerCarton', label: 'Quantity Per Carton', placeholder: 'Items per carton', keyboardType: 'numeric', required: true },
+  { key: 'totalQuantity', label: 'Total Quantity (Pieces)', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+  { key: 'pricePerPiece', label: 'Price Per Piece', placeholder: 'Enter price per piece', keyboardType: 'numeric', required: true },
+  { key: 'totalAmount', label: 'Total Amount', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: false },
+  { key: 'amountPaid', label: 'Amount Paid', placeholder: 'Upfront payment', keyboardType: 'numeric' },
+  { key: 'remainingBalance', label: 'Remaining Balance', placeholder: 'Auto-calculated', keyboardType: 'numeric', editable: true },
+  { key: 'customerName', label: 'Customer Name', placeholder: 'Enter customer name', required: true },
+  { key: 'phoneNumber', label: 'Phone Number', placeholder: 'Customer contact' },
+  { key: 'plateNumber', label: 'Plate Number', placeholder: 'Vehicle plate number' },
+  { key: 'place', label: 'Place', placeholder: 'Delivery/sale location' },
+  { key: 'paymentStatus', label: 'Payment Status', placeholder: 'Unpaid/Partially Paid/Paid' },
+  { key: 'dueDate', label: 'Due Date', placeholder: 'Expected payment date' },
+  { key: 'notes', label: 'Notes', placeholder: 'Custom remarks' },
+];

@@ -1,13 +1,27 @@
 import React, { useRef, useEffect, memo, useCallback } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity, Image } from 'react-native';
-import { PanGestureHandler, State } from 'react-native-gesture-handler';
-import { useNavigation } from '@react-navigation/native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Animated,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
+import { PanGestureHandler, State, PanGestureHandlerStateChangeEvent } from 'react-native-gesture-handler';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';
 import Button from './Button'; // Import your Button component
 
-const CustomDrawer = memo(({ isOpen, onClose }) => {
-  const navigation = useNavigation();
+// 👉 Define props type
+type CustomDrawerProps = {
+  isOpen: boolean;
+  onClose: () => void;
+};
+
+// 👉 You can type your navigation if needed (optional for now)
+const CustomDrawer: React.FC<CustomDrawerProps> = memo(({ isOpen, onClose }) => {
+  const navigation = useNavigation<NavigationProp<any>>();
   const translateX = useRef(new Animated.Value(isOpen ? 0 : 300)).current;
   const overlayOpacity = useRef(new Animated.Value(isOpen ? 0.4 : 0)).current;
 
@@ -32,7 +46,7 @@ const CustomDrawer = memo(({ isOpen, onClose }) => {
     { useNativeDriver: true }
   );
 
-  const onHandlerStateChange = (event) => {
+  const onHandlerStateChange = (event: PanGestureHandlerStateChangeEvent) => {
     if (event.nativeEvent.oldState === State.ACTIVE) {
       if (event.nativeEvent.translationX < -50) {
         onClose();
@@ -45,11 +59,11 @@ const CustomDrawer = memo(({ isOpen, onClose }) => {
     }
   };
 
-  const navigateAndClose = useCallback((screenName) => {
-    onClose(); // Close drawer first for immediate feedback
+  const navigateAndClose = useCallback((screenName: string) => {
+    onClose();
     setTimeout(() => {
       navigation.navigate(screenName);
-    }, 100); // Small delay to ensure smooth closing
+    }, 100);
   }, [navigation, onClose]);
 
   const menuItems = [
@@ -63,7 +77,6 @@ const CustomDrawer = memo(({ isOpen, onClose }) => {
 
   return (
     <>
-      {/* Overlay */}
       <Animated.View
         style={[
           styles.overlay,
@@ -75,7 +88,6 @@ const CustomDrawer = memo(({ isOpen, onClose }) => {
         onTouchStart={onClose}
       />
 
-      {/* Drawer */}
       <PanGestureHandler
         onGestureEvent={onGestureEvent}
         onHandlerStateChange={onHandlerStateChange}
@@ -94,7 +106,7 @@ const CustomDrawer = memo(({ isOpen, onClose }) => {
             end={{ x: 1, y: 0 }}
             style={styles.gradientBackground}
           />
-          
+
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>✕</Text>
           </TouchableOpacity>
@@ -118,10 +130,9 @@ const CustomDrawer = memo(({ isOpen, onClose }) => {
             ))}
           </View>
 
-          {/* Bottom Image */}
           <View style={styles.bottomImageContainer}>
             <Image
-              source={require('./images/judas2.png')} // Replace with your image path
+              source={require('./images/judas2.png')}
               style={styles.bottomImage}
               resizeMode="contain"
             />
@@ -186,29 +197,29 @@ const styles = StyleSheet.create({
   },
   menuItemWrapper: {
     width: '100%',
-    marginBottom: 20, // Increased spacing between items
-    alignItems: 'stretch', // Ensures all items align properly
+    marginBottom: 20,
+    alignItems: 'stretch',
   },
   menuButton: {
     backgroundColor: 'rgba(157, 178, 191, 0.25)',
     borderRadius: 12,
-    height: 55, // Fixed height for consistent alignment
-    width: '100%', // Ensures full width
-    alignSelf: 'stretch', // Stretch to fill wrapper
+    height: 55,
+    width: '100%',
+    alignSelf: 'stretch',
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 0, // Remove vertical padding since we have fixed height
-    marginVertical: 0, // Remove margin as spacing is handled by wrapper
-    flexDirection: 'row', // Ensure horizontal layout
+    paddingVertical: 0,
+    marginVertical: 0,
+    flexDirection: 'row',
   },
   menuButtonText: {
     color: '#393247',
     fontSize: 18,
     fontWeight: '500',
     textAlign: 'left',
-    marginLeft: 12, // Add space between icon and text
-    flex: 1, // Take remaining space
+    marginLeft: 12,
+    flex: 1,
   },
   bottomImageContainer: {
     position: 'absolute',

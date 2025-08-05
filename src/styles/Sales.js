@@ -3,10 +3,10 @@ import { StyleSheet } from 'react-native';
 const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#e8e8e8',
   },
     containerTwo: {
       display: 'flex',
+      paddingTop: 70,
     },
     header: {
       backgroundColor: '#fff',

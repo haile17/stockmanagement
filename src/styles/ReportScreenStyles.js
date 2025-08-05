@@ -5,6 +5,7 @@ export const reportScreenStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+    paddingTop: 65, // Adjusted for header height
   },
   section: {
     backgroundColor: 'white',

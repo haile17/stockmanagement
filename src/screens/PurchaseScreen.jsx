@@ -17,8 +17,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../styles/Sales';
 import { useAlert } from '../context/AlertContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Header from '../components/Header';
 
-function PurchaseScreen() {
+function PurchaseScreen( { onToggleDrawer } ) {
   const [purchases, setPurchases] = useState([]);
   const [filteredPurchases, setFilteredPurchases] = useState([]);
   const [selectedDatabase, setSelectedDatabase] = useState(null);
@@ -338,6 +339,11 @@ function PurchaseScreen() {
       style={styles.container}
       imageStyle={{ opacity: 0.3 }}
     >
+    <Header 
+            onToggleDrawer={onToggleDrawer} 
+            iconColor="#ffffff" // White icon for dark background
+            backgroundColor="transparent"
+          />
     <View style={styles.containerTwo}>
       {/* Statistics Cards */}
       <View style={styles.statsContainer}>

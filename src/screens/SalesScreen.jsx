@@ -16,8 +16,9 @@ import DataService from '../services/DataService';
 import styles from '../styles/Sales';
 import { formatNumberWithCommas } from '../components/utils/formatters';
 import { useAlert } from '../context/AlertContext';
+import Header from '../components/Header';
 
-function SalesScreen() {
+function SalesScreen( { onToggleDrawer } ) {
   const [sales, setSales] = useState([]);
   const [filteredSales, setFilteredSales] = useState([]);
   const [selectedDatabase, setSelectedDatabase] = useState(null);
@@ -239,10 +240,15 @@ function SalesScreen() {
 
   return (
     <ImageBackground
-      source={require('../components/images/judas.jpg')}
+      source={require('../components/images/wall2.jpg')}
       style={styles.container}
-      imageStyle={{ opacity: 0.2 }}
+      imageStyle={{ opacity: 0.5 }}
     >
+      <Header
+        onToggleDrawer={onToggleDrawer}
+        iconColor="#ffffff" // White icon for dark background
+        backgroundColor="transparent"
+      />
       <View style={styles.containerTwo}>
         <SalesHeader
           totalSales={totalSales}

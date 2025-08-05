@@ -17,8 +17,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../styles/Sales'; // Reusing the same styles
 import { useAlert } from '../context/AlertContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Header from '../components/Header';
 
-function CreditScreen() {
+function CreditScreen( { onToggleDrawer } ) {
   const [credits, setCredits] = useState([]);
   const [filteredCredits, setFilteredCredits] = useState([]);
   const [selectedDatabase, setSelectedDatabase] = useState(null);
@@ -365,6 +366,11 @@ const handleMarkAsPaid = async (credit) => {
           style={styles.container}
           imageStyle={{ opacity: 0.2 }}
         >
+           <Header
+                  onToggleDrawer={onToggleDrawer} 
+                  iconColor="#ffffff" // White icon for dark background
+                  backgroundColor="transparent"
+                />
     <View style={styles.containerTwo}>
       {/* Statistics Cards */}
       <View style={styles.statsContainer}>

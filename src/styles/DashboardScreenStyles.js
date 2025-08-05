@@ -3,18 +3,13 @@ import { StyleSheet } from 'react-native';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#e8e8e8',
-    zIndex: -1,
+    backgroundColor: '#fff',
   },
   containerTwo: {
       display: 'flex',
       padding: 16,
     },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
+
   summary: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -35,10 +30,10 @@ const styles = StyleSheet.create({
 },
   card: {
     width: '48%',
-    backgroundColor: '#fff',
+    backgroundColor: '#373b4d',
     padding: 15,
-    borderWidth: 0.5,
-    borderColor: '#8DA9A4',
+    borderWidth: 1,
+    borderColor: '#373b4d',
     borderRadius: 8,
     marginBottom: 10,
     shadowColor: '#000',
@@ -49,24 +44,21 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
     marginBottom: 10,
+    fontFamily: 'Montserrat-Bold',
+    color: '#ecedef',
   },
   cardText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#557C93',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: 'Montserrat-Medium',
+    color: '#d7d7d7ff',
   },
   section: {
     marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Montserrat-Bold',
     marginBottom: 10,
   },
   cardTitleRow: {
@@ -97,11 +89,12 @@ icon: {
   },
   tableHeader: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontFamily: 'Montserrat-Bold',
     color: '#555',
   },
   tableCell: {
     fontSize: 14,
+    fontFamily: 'Montserrat-Medium',
     color: '#555',
   },
 });

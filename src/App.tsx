@@ -3,7 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import Header from './components/Header';
 import CustomDrawer from './components/CustomDrawer';
 import { AlertProvider } from './context/AlertContext';
 import { StatusBar, Platform, View, ImageBackground } from 'react-native';
@@ -33,6 +32,7 @@ function App() {
 
     checkLandingPageSeen();
   }, []);
+
   const hideSystemBars = useCallback(() => {
     StatusBar.setBarStyle('light-content', true);
     StatusBar.setBackgroundColor('transparent', true);
@@ -51,7 +51,6 @@ function App() {
   useEffect(() => {
     hideSystemBars();
     
-    // Set up interval to keep bars hidden
     const interval = setInterval(() => {
       hideSystemBars();
     }, 1000);
@@ -68,24 +67,17 @@ function App() {
     setIsDrawerOpen(!isDrawerOpen);
   };
 
+  // Remove header completely from navigation
   const commonScreenOptions: NativeStackNavigationOptions = {
-  headerTitle: () => <Header onToggleDrawer={toggleDrawer} />,
-  headerStyle: { 
-    backgroundColor: 'transparent',
-  },
-  headerTitleAlign: 'center',
-  headerLeft: () => null,
-  headerRight: () => null,
-  headerBackVisible: false,
-  statusBarHidden: false,
-  statusBarStyle: 'light',
-  statusBarBackgroundColor: 'transparent',
-  navigationBarHidden: true,
-  // Add these for better performance
-  freezeOnBlur: true,
-  animation: 'slide_from_right',
-  animationDuration: 200,
-};
+    headerShown: false,
+    statusBarHidden: false,
+    statusBarStyle: 'light',
+    statusBarBackgroundColor: 'transparent',
+    navigationBarHidden: true,
+    freezeOnBlur: true,
+    animation: 'slide_from_right',
+    animationDuration: 200,
+  };
 
   return (
     <AlertProvider>
@@ -97,66 +89,55 @@ function App() {
           <Stack.Navigator
             initialRouteName={hasSeenLandingPage ? "Dashboard" : "Landing"}
           >
-            {/* Always include the Landing screen in the stack */}
             <Stack.Screen
               name="Landing"
-              options={{ headerShown: false,
+              options={{ 
+                headerShown: false,
                 statusBarHidden: true,
                 statusBarStyle: 'light',
-                navigationBarHidden: true, // This helps hide navigation bar on Android
+                navigationBarHidden: true,
               }}
             >
               {props => <LandingPage {...props} onShown={handleLandingPageShown} />}
             </Stack.Screen>
             
-            {/* Always include all other screens */}
-            <Stack.Screen
-              name="Dashboard"
-              options={commonScreenOptions}
-              >
+            <Stack.Screen name="Dashboard" options={commonScreenOptions}>
               {props => (
-               <Suspense fallback={
-                  <View style={{
-                    flex: 1, 
-                    backgroundColor: '#000' // Keep as fallback
-                  }}>
+                <Suspense fallback={
+                  <View style={{ flex: 1, backgroundColor: '#000' }}>
                     <ImageBackground 
-                      source={require('./components/images/judas.jpg')} // Replace with your image path
+                      source={require('./components/images/judas.jpg')}
                       style={{flex: 1}}
                       resizeMode="cover"
                     />
                   </View>
                 }>
-                  <DashboardScreen {...props} />
+                  <DashboardScreen {...props} onToggleDrawer={toggleDrawer} />
                 </Suspense>
               )}
             </Stack.Screen>
-            <Stack.Screen
-              name="Inventory"
-              component={InventoryScreen}
-              options={commonScreenOptions}
-            />
-            <Stack.Screen
-              name="Credit"
-              component={CreditScreen}
-              options={commonScreenOptions}
-            />
-            <Stack.Screen
-              name="Purchase"
-              component={PurchaseScreen}
-              options={commonScreenOptions}
-            />
-            <Stack.Screen
-              name="Reports"
-              component={ReportsScreen}
-              options={commonScreenOptions}
-            />
-            <Stack.Screen
-              name="Sales"
-              component={SalesScreen}
-              options={commonScreenOptions}
-            />
+            
+            <Stack.Screen name="Inventory" options={commonScreenOptions}>
+              {props => <InventoryScreen {...props} onToggleDrawer={toggleDrawer} />}
+            </Stack.Screen>
+            
+            <Stack.Screen name="Credit" options={commonScreenOptions}>
+              {props => <CreditScreen {...props} onToggleDrawer={toggleDrawer} />}
+            </Stack.Screen>
+            
+            <Stack.Screen name="Purchase" options={commonScreenOptions}>
+              {props => <PurchaseScreen {...props} onToggleDrawer={toggleDrawer} />}
+            </Stack.Screen>
+            
+            <Stack.Screen name="Reports" options={commonScreenOptions}>
+              {props => <ReportsScreen {...props} onToggleDrawer={toggleDrawer} />}
+            </Stack.Screen>
+            
+            <Stack.Screen name="Sales" options={commonScreenOptions}>
+              {props => <SalesScreen {...props} onToggleDrawer={toggleDrawer} />}
+            </Stack.Screen>
           </Stack.Navigator>
+          
           <CustomDrawer 
             isOpen={isDrawerOpen} 
             onClose={() => setIsDrawerOpen(false)} 

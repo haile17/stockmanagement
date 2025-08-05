@@ -20,9 +20,10 @@ import { formatDate, formatDateOnly } from '../components/utils/formatters';
 import { useAlert } from '../context/AlertContext';
 import Button from '../components/Button';
 import ScrollingText from '../components/utils/ScrollingText';
+import Header from '../components/Header';
 
 
-const ReportScreen = ({ navigation }) => {
+const ReportScreen = ({ navigation, onToggleDrawer }) => {
   // State management
   const [salesData, setSalesData] = useState([]);
   const [purchasesData, setPurchasesData] = useState([]);
@@ -485,6 +486,11 @@ const renderDateFilters = () => {
 
   return (
   <View style={reportScreenStyles.container}>
+    <Header
+      onToggleDrawer={onToggleDrawer}
+      iconColor="#ffffff" // White icon for dark background
+      backgroundColor="transparent"
+    />
     <FlatList
       data={generatedPDFs}
       keyExtractor={(item, index) => `${item.name}-${index}`}
