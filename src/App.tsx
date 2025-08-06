@@ -106,7 +106,7 @@ function App() {
                 <Suspense fallback={
                   <View style={{ flex: 1, backgroundColor: '#000' }}>
                     <ImageBackground 
-                      source={require('./components/images/judas.jpg')}
+                      source={require('./components/images/lion.jpg')}
                       style={{flex: 1}}
                       resizeMode="cover"
                     />

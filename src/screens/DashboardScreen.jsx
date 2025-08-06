@@ -49,6 +49,12 @@ function DashboardScreen({ navigation, onToggleDrawer }) { // Add onToggleDrawer
 
   return (
 
+    <ImageBackground 
+                      source={require('../components/images/lion.jpg')}
+                      style={{flex: 1}}
+                      resizeMode="cover"
+                      imageStyle={{ opacity: 0.3 }}
+                    >
       <View style={styles.container}>
         {/* Header Component - Positioned absolutely over the background */}
         <Header 
@@ -163,7 +169,7 @@ function DashboardScreen({ navigation, onToggleDrawer }) { // Add onToggleDrawer
           selectedItem={formState.selectedCreditItem}
         />
       </View>
-  
+  </ImageBackground>
   );
 }
 

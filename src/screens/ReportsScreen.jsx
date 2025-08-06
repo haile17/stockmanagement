@@ -8,7 +8,8 @@ import {
   FlatList,
   TextInput,
   Platform,
-  Animated
+  Animated,
+  ImageBackground
 } from 'react-native';
 import DataService from '../services/DataService';
 import PDFService from '../services/PDFService';
@@ -485,11 +486,11 @@ const renderDateFilters = () => {
   const reportData = getCurrentReportData();
 
   return (
-  <View style={reportScreenStyles.container}>
-    <Header
-      onToggleDrawer={onToggleDrawer}
-      iconColor="#ffffff" // White icon for dark background
-      backgroundColor="transparent"
+      <View style={reportScreenStyles.container}>
+        <Header
+          onToggleDrawer={onToggleDrawer}
+          iconColor="#ffffff" // White icon for dark background
+          backgroundColor="transparent"
     />
     <FlatList
       data={generatedPDFs}

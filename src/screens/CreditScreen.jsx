@@ -106,9 +106,9 @@ function CreditScreen({ onToggleDrawer }) {
 
   return (
     <ImageBackground
-      source={require('../components/images/moa.jpg')}
+      source={require('../components/images/lion.jpg')}
       style={styles.container}
-      imageStyle={{ opacity: 0.1 }}
+      imageStyle={{ opacity: 0.5 }}
     >
       <Header
         onToggleDrawer={onToggleDrawer} 

@@ -79,9 +79,9 @@ const InventoryScreen = ({ onToggleDrawer }) => {
 
   return (
     <ImageBackground
-      source={require('../components/images/judas.jpg')}
+      source={require('../components/images/simple.jpg')}
       style={styles.container}
-      imageStyle={{ opacity: 0.2 }}
+      
       resizeMode='cover'
     >
       <Header 

@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import logo from '../components/images/icon.png';
-import backgroundImage from '../components/images/frontpage.jpg';
+import backgroundImage from '../components/images/lion.jpg';
 import Button from '../components/Button';
 import { CircleFade  } from 'react-native-animated-spinkit'
 
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        backgroundColor: 'rgba(82, 109, 130, 0.1)',
+        backgroundColor: 'rgba(255, 255, 255, 0.5)',
         alignItems: 'center',
         justifyContent: 'center',
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,

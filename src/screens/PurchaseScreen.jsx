@@ -335,9 +335,9 @@ function PurchaseScreen( { onToggleDrawer } ) {
 
   return (
     <ImageBackground
-      source={require('../components/images/adwa.jpg')} // or use a URI
+      source={require('../components/images/egl.jpg')} // or use a URI
       style={styles.container}
-      imageStyle={{ opacity: 0.3 }}
+      imageStyle={{ opacity: 0.4 }}
     >
     <Header 
             onToggleDrawer={onToggleDrawer} 

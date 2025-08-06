@@ -240,9 +240,9 @@ function SalesScreen( { onToggleDrawer } ) {
 
   return (
     <ImageBackground
-      source={require('../components/images/wall2.jpg')}
+      source={require('../components/images/simple2.jpg')}
       style={styles.container}
-      imageStyle={{ opacity: 0.5 }}
+      resizeMode="cover"
     >
       <Header
         onToggleDrawer={onToggleDrawer}

@@ -257,8 +257,9 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   footerText: {
-    fontSize: 1,
+    fontSize: 12,
     color: '#000000ff',
+    fontWeight: 'bold',
   },
 });
 
