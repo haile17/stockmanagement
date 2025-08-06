@@ -133,6 +133,12 @@ const CreditSalesCards = ({ recentCredits, styles }) => {
 export const cardStyles = {
   container: {
     marginBottom: 20,
+  },  
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#6973beff',
+    marginLeft: 10,
   },
   scrollContainer: {
     maxHeight: 300, // Limit height so it doesn't interfere with bottom buttons
@@ -151,7 +157,7 @@ export const cardStyles = {
     fontStyle: 'italic',
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fafafaff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -163,8 +169,8 @@ export const cardStyles = {
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderWidth: 0.5,
+    borderColor: '#353a5f',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -179,7 +185,7 @@ export const cardStyles = {
   itemName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212529',
+    color: '#353a5f',
     marginBottom: 4,
   },
   customerName: {
@@ -222,13 +228,13 @@ export const cardStyles = {
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginBottom: 8,
-    gap: 8,
+    gap: 12,
   },
   additionalText: {
     fontSize: 12,
     color: '#6c757d',
-    backgroundColor: '#f8f9fa',
-    paddingHorizontal: 8,
+    backgroundColor: '#9ebaf3',
+    paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
   },
@@ -257,17 +263,17 @@ export const cardStyles = {
     alignItems: 'center',
     marginTop: 8,
     paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
+    borderTopWidth: 0.7,
+    borderTopColor: '#353a5f',
   },
   dueDateLabel: {
     fontSize: 12,
-    color: '#6c757d',
-    fontWeight: '500',
+    color: '#353a5f',
+    fontWeight: '600',
   },
   dueDateValue: {
     fontSize: 12,
-    color: '#212529',
+    color: '#353a5f',
     fontWeight: '600',
   },
 };

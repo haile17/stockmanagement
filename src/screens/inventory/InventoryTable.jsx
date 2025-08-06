@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import Table from '../../components/Table';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { formatNumberWithCommas } from '../../components/utils/formatters';
+import { formatDate, formatDateOnly, formatNumberWithCommas } from '../../components/utils/formatters';
 import { CircleFade } from 'react-native-animated-spinkit';
 import styles from '../../styles/InventoryScreenStyles';
 
@@ -50,7 +50,10 @@ const InventoryTable = ({ inventory, inventoryLoading, onDeleteItem, customConfi
   return (
     <View style={[styles.sectionHeader]}>
       <View style={styles.titleHeader}>
-        <Text style={styles.sectionTitle}>🍽️ Kitchen Inventory Database</Text>
+        <View style={styles.sectionTitleContainer}>
+          <Icon name="restaurant-outline"  style={styles.sectionIcon} size={12} color="#353a5f" />
+          <Text style={styles.sectionTitle}>Inventory Database</Text>
+        </View>
         <Text style={styles.itemCount}>
           {inventory.length} {inventory.length === 1 ? 'item' : 'items'}
         </Text>
@@ -74,7 +77,7 @@ const InventoryTable = ({ inventory, inventoryLoading, onDeleteItem, customConfi
             }]
           }}
         >
-          <ScrollView style={{ minHeight: 450, marginHorizontal: 0 }}>
+          <ScrollView style={{ minHeight: 450, marginHorizontal: 0  }}>
             <Table
                 headers={[
                     "Status", 
@@ -101,7 +104,7 @@ const InventoryTable = ({ inventory, inventoryLoading, onDeleteItem, customConfi
                     `ETB ${formatNumberWithCommas(item.purchasePricePerCarton || 0)}`,
                     `ETB ${formatNumberWithCommas(item.totalAmount || 0)}`, // New column
                     item.source || '',
-                    item.lastPurchaseDate ? new Date(item.lastPurchaseDate).toLocaleDateString() : 'N/A',
+                    item.lastPurchaseDate ? formatDateOnly(item.lastPurchaseDate) : 'N/A',
                     <TouchableOpacity 
                     key={index}
                     onPress={() => confirmDeleteItem(index, item)}
@@ -116,7 +119,7 @@ const InventoryTable = ({ inventory, inventoryLoading, onDeleteItem, customConfi
         </Animated.View>
       ) : (
         <View style={styles.emptyState}>
-          <Icon name="restaurant-outline" size={48} color="#ccc" />
+          <Icon name="restaurant-outline" size={48} color="#9ebaf3" />
           <Text style={styles.emptyTitle}>No Kitchen Inventory Data</Text>
           <Text style={styles.emptySubtitle}>
             Import your first Excel file to get started with kitchen inventory management

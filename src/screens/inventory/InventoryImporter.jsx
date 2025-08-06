@@ -270,7 +270,10 @@ const InventoryImporter = ({ onImportSuccess, customConfirm }) => {
 
       {/* Import Section */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>📥 Import Kitchen Inventory Data</Text>
+        <View style={styles.sectionTitleContainer}>
+            <Icon name="arrow-down-circle-outline"  style={styles.sectionIcon} size={14} color="#353a5f" />
+            <Text style={styles.sectionTitle}>Import Kitchen Inventory Data</Text>
+          </View>
         
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Button 
@@ -308,9 +311,12 @@ const InventoryImporter = ({ onImportSuccess, customConfirm }) => {
         )}
         
         {!fileSelected && (
+         <View style={styles.helpTextContainer}>
+          <Icon name="information-circle-outline" style={styles.sectionIcon} size={14} color="#353a5f" />
           <Text style={styles.helpText}>
-            💡 Click "Choose Excel File" to see formatting guidelines and select your kitchen inventory file
+            Click "Choose Excel File" to see formatting guidelines and select your kitchen inventory file
           </Text>
+        </View>
         )}
       </View>
     </>

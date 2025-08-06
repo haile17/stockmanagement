@@ -45,18 +45,18 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     closeButton: {
-        minWidth: 36,
-        minHeight: 36,
+        minWidth: 26,
+        minHeight: 26,
         marginVertical: 0,
         marginHorizontal: 0,
-        marginLeft: 12,
+        marginLeft: 10,
         backgroundColor: 'transparent',
-        borderRadius: 18,
+        borderRadius: 15,
         shadowOpacity: 0,
         elevation: 0,
     },
     closeButtonText: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold',
     },
     content: {
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#374151',
+        color: '#353a5f',
         marginBottom: 8,
         letterSpacing: 0.3,
     },
@@ -79,8 +79,8 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     input: {
-        borderWidth: 1.5,
-        borderColor: '#d1d5db',
+        borderWidth: 0.8,
+        borderColor: '#353a5f',
         borderRadius: 16,
         padding: 16,
         fontSize: 16,
@@ -97,6 +97,13 @@ const styles = StyleSheet.create({
             borderColor: '#2563eb',
             backgroundColor: '#ffffff',
         },
+    },
+    calculatedHint: {
+        fontSize: 12,
+        color: '#6e96e6ff',
+        marginTop: 6,
+        fontWeight: 'bold',
+        letterSpacing: 0.2,
     },
     footer: {
         flexDirection: 'row',

@@ -300,8 +300,9 @@ function PurchaseScreen( { onToggleDrawer } ) {
         
         <View style={styles.saleActions}>
           <Button
-            type="danger"
-            size="xs"
+            color="secondary"
+            variant="outline"
+            size="small"
             title="Delete"
             onPress={() => handleDelete(item)}
             style={styles.returnButton}
@@ -323,7 +324,8 @@ function PurchaseScreen( { onToggleDrawer } ) {
       </Text>
       {(searchQuery || dateFilter !== 'all') && (
         <Button
-          type="outline"
+          color="primary"
+          variant="solid"
           size="small"
           title="Clear Filters"
           onPress={clearFilters}
@@ -368,7 +370,7 @@ function PurchaseScreen( { onToggleDrawer } ) {
           placeholder="Search by item name, item code, or source..."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor="#8DA9A4"
+          placeholderTextColor="#011f4b"
         />
       </View>
 

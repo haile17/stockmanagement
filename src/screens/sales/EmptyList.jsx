@@ -15,7 +15,8 @@ function EmptyList({ searchQuery, dateFilter, onClearFilters }) {
       </Text>
       {(searchQuery || dateFilter !== 'all') && (
         <Button
-          type="outline"
+          color="secondary"
+          variant="solid"
           size="small"
           title="Clear Filters"
           onPress={onClearFilters}

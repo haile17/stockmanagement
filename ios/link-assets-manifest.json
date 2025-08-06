@@ -1,0 +1,61 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/Montserrat-Black.ttf",
+      "sha1": "ea4feb16f3d8cb3f1cbc8e3a7af7388cc01ce32e"
+    },
+    {
+      "path": "assets/fonts/Montserrat-Bold.ttf",
+      "sha1": "bf257f6f91f6522eccea6d4f28d57bb118c98729"
+    },
+    {
+      "path": "assets/fonts/Montserrat-Light.ttf",
+      "sha1": "1db8878a7654208b6c55402f6ff717e03a312e1e"
+    },
+    {
+      "path": "assets/fonts/Montserrat-Medium.ttf",
+      "sha1": "4656e40419da86a5fec473ea8e7fc0efef183f05"
+    },
+    {
+      "path": "assets/fonts/Montserrat-Regular.ttf",
+      "sha1": "9ca420aa453eb243037970c0c1c1adfe289f510f"
+    },
+    {
+      "path": "assets/fonts/SF-Black.otf",
+      "sha1": "026fe4561320ae030f5fdf7efcdc4185257a849d"
+    },
+    {
+      "path": "assets/fonts/SF-Bold.ttf",
+      "sha1": "f1278a898670d2a92c066e14ce427b1789b44e16"
+    },
+    {
+      "path": "assets/fonts/SF-Heavy.otf",
+      "sha1": "72cf5aecdde4430a015b363cb66ec1f2810bfe19"
+    },
+    {
+      "path": "assets/fonts/SF-Light.ttf",
+      "sha1": "db1be7039e1a092e600d8e4a6c5e3ec334e9783f"
+    },
+    {
+      "path": "assets/fonts/SF-Medium.otf",
+      "sha1": "4de8397e62145d3c3e0fd260d24e5ea9b16f4052"
+    },
+    {
+      "path": "assets/fonts/SF-Regular.otf",
+      "sha1": "97d7866e3bf32d9131532d9428f6c2e20f276edb"
+    },
+    {
+      "path": "assets/fonts/SF-Semibold.otf",
+      "sha1": "260096ed8b47556cbffc77bd1335bdb903337bfb"
+    },
+    {
+      "path": "assets/fonts/SF-Thin.otf",
+      "sha1": "47cbe11a00ea1359f526ba81596d7b167cd46527"
+    },
+    {
+      "path": "assets/fonts/SF-Ultralight.otf",
+      "sha1": "20c34cf72e3dab2726ba0e479f0f87b07d91321a"
+    }
+  ]
+}

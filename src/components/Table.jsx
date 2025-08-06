@@ -70,7 +70,7 @@ const Table: React.FC<TableProps> = ({ headers, data, noDataMessage = 'No data a
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 4,
+    borderRadius: 14,
     overflow: 'hidden',
     backgroundColor: '#ffffff',
     borderWidth: 1,
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     borderBottomWidth: 2,
-    borderBottomColor: '#27374D',
+    borderBottomColor: '#9ebaf3',
     backgroundColor: '#f5f5f5',
   },
   headerCell: {
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRightWidth: 1,
-    borderRightColor: '#e0e0e0',
+    borderRightColor: '#9ebaf3',
   },
   lastHeaderCell: {
     borderRightWidth: 0,

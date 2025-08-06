@@ -4,7 +4,6 @@ import {
   Modal, 
   View, 
   Text, 
-  TouchableOpacity, 
   StyleSheet, 
   Dimensions,
   ScrollView 
@@ -32,11 +31,20 @@ const CustomModal = ({
       case 'warning':
         return { ...styles.modalContent, borderLeftColor: '#ff9800', borderLeftWidth: 4 };
       case 'danger':
-        return { ...styles.modalContent, borderLeftColor: '#f44336', borderLeftWidth: 4 };
+        return { ...styles.modalContent, borderLeftColor: '#dc2626', borderLeftWidth: 4 };
       case 'success':
-        return { ...styles.modalContent, borderLeftColor: '#4caf50', borderLeftWidth: 4 };
+        return { ...styles.modalContent, borderLeftColor: '#059669', borderLeftWidth: 4 };
       default:
-        return styles.modalContent;
+        return { ...styles.modalContent, borderLeftColor: '#9ebaf3', borderLeftWidth: 4 };
+    }
+  };
+
+  const getButtonType = () => {
+    switch (type) {
+      case 'danger': return 'danger';
+      case 'success': return 'success';
+      case 'warning': return 'secondary';
+      default: return 'primary';
     }
   };
 
@@ -45,7 +53,7 @@ const CustomModal = ({
       transparent={true} 
       visible={isOpen} 
       animationType={animationType}
-      onRequestClose={onCancel} // Handle Android back button
+      onRequestClose={onCancel}
     >
       <View style={styles.overlay}>
         <View style={getModalStyle()}>
@@ -63,19 +71,20 @@ const CustomModal = ({
               <Button
                 title={cancelText}
                 onPress={onCancel}
-                type="secondary"
-                variant="outline"
-                size="medium"
+                color="primary"
+                variant="solid"
+                size="small"
                 style={{ flex: 1 }}
               />
             )}
             
-           <Button
+            <Button
               title={confirmText}
               onPress={onConfirm}
-              type={type === 'danger' ? 'danger' : type === 'success' ? 'success' : 'primary'}
-              size="medium"
-              style={{ flex: !showCancel ? 1 : 1 }}
+              color={getButtonType()}
+              variant={type === 'warning' ? 'outline' : 'solid'}
+              size="small"
+              style={{ flex: 1 }}
             />
           </View>
         </View>
@@ -214,7 +223,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 24,
     maxWidth: Math.min(screenWidth * 0.9, 400),
     width: '100%',
@@ -231,7 +240,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#353a5f',
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -241,15 +250,15 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 16,
-    color: '#555',
-    lineHeight: 18,
+    color: '#475569',
+    lineHeight: 24,
     textAlign: 'center',
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 12,
-    },
+  },
 });
 
 export default useCustomModal;

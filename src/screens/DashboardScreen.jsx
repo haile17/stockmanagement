@@ -14,7 +14,7 @@ import { useFormState } from '../hooks/useFormState';
 import { createFormHandlers } from '../handlers/formHandlers';
 import { saleFields, purchaseFields, creditFields } from '../config/formFields';
 import Header from '../components/Header';
-import CreditSalesCards from './dashboard/CreditSalesCards';
+import CreditSalesCards, { cardStyles } from './dashboard/CreditSalesCards';
 
 function DashboardScreen({ navigation, onToggleDrawer }) { // Add onToggleDrawer prop
   const { showSuccess, showError, showWarning } = useAlert();
@@ -67,7 +67,7 @@ function DashboardScreen({ navigation, onToggleDrawer }) { // Add onToggleDrawer
           style={styles.containerTwo} 
           contentContainerStyle={{ 
             paddingBottom: 100,
-            paddingTop: 100 // Add top padding to account for the header
+            paddingTop: 80 // Add top padding to account for the header
           }}
         >
           
@@ -83,31 +83,34 @@ function DashboardScreen({ navigation, onToggleDrawer }) { // Add onToggleDrawer
           {/* Recent Credit Sales */}
          <CreditSalesCards 
               recentCredits={recentCredits}
-              styles={styles}
+              styles={cardStyles}
             />
         </ScrollView>
 
         {/* Fixed Bottom Action Buttons */}
-        <View style={styles.fixedBottomActions}>
-          <Button
-            type="gradient"
-            size="medium"
-            title="New Sale"
-            onPress={() => formState.setShowSalePopup(true)}
-          />
-          <Button
-            type="gradient"
-            size="medium"
-            title="New Purchase"
-            onPress={() => formState.setShowPurchasePopup(true)}
-          />
-          <Button
-            type="gradient"
-            size="medium"
-            title="Credit Sale"
-            onPress={() => formState.setShowCreditPopup(true)}
-          />
-        </View>
+       <View style={styles.fixedBottomActions}>
+        <Button
+          color="primary"
+          variant="solid"
+          size="medium"
+          title="New Sale"
+          onPress={() => formState.setShowSalePopup(true)}
+        />
+        <Button
+          color="primary"
+          variant="solid"
+          size="medium"
+          title="New Purchase"
+          onPress={() => formState.setShowPurchasePopup(true)}
+        />
+        <Button
+          color="primary"
+          variant="solid"
+          size="medium"
+          title="Credit Sale"
+          onPress={() => formState.setShowCreditPopup(true)}
+        />
+      </View>
 
         {/* Sale Popup */}
         <RecordPopup

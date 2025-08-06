@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
   hamburger: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Add subtle background for better visibility
+    backgroundColor: '#005b96',
   },
 });
 

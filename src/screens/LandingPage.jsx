@@ -93,7 +93,7 @@ function LandingPage({ onShown }) {
             >
                 <View style={styles.container}>
                     <Animated.View style={{ transform: [{ translateY: logoTranslateY }], opacity: logoOpacity }}>
-                        <Image source={logo} style={styles.logo} />
+                     <Image source={logo} style={styles.logo} />
                     </Animated.View>
                     <View>
                     {!showButton ? (
@@ -103,9 +103,10 @@ function LandingPage({ onShown }) {
                             ) : (
                                 <View style={styles.actionContainer}>
                                     <Button
-                                        title="Enter App"
-                                        type="gradient"
-                                        size="large"
+                                        title="Access"
+                                        color="secondary"
+                                            variant="outline"
+                                            size="large"
                                         onPress={handleNavigate}
                                         gradientDirection="diagonal"
                                         style={styles.enterButton}
@@ -142,6 +143,7 @@ const styles = StyleSheet.create({
         width: 280,
         height: 250,
         marginBottom: 30,
+        opacity: 0
         
     },
     actionContainer: {

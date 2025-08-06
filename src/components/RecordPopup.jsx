@@ -211,10 +211,11 @@ const RecordPopup = ({
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
             <Button
-              type="ghost"
+              color="secondary"
+              variant="outline"
               size="small"
               onPress={onClose}
-              icon={<Icon name="close" size={28} color="#64748b" />}
+              icon={<Icon name="close" size={18} color="#353a5f" />}
               style={styles.closeButton}
               ariaLabel="Close popup"
             />
@@ -325,19 +326,21 @@ const RecordPopup = ({
          
          <View style={styles.footer}>
            <Button
-             type="outline"
+             color="secondary"
+             variant="outline"
              size="small"
              title="Cancel"
              onPress={onClose}
              fullWidth={true}
-             icon={<Icon name="close-circle-outline" size={18} color="#64748b" />}
+             icon={<Icon name="close-circle-outline" size={18} color="#353a5f" />}
              iconPosition="left"
              ariaLabel="Cancel action"
              style={{ marginRight: 8 }}
            />
            <Button
-             type="gradient"
-             size="medium"
+            color="primary"
+             variant="solid"
+             size="small"
              title={submitButtonText}
              onPress={handleSubmit}
              fullWidth={true}

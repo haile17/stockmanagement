@@ -35,11 +35,30 @@ function SalesFilters({
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search by item name, item code, or customer..."
+          // placeholder="Search by item name, item code, or customer..."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor="#8DA9A4"
+          placeholderTextColor="#011f4b"
         />
+        {!searchQuery ? (
+            <Text
+              style={{
+                position: 'absolute',
+                left: 40,
+                top: 0,
+                bottom: 0,
+                color: '#011f4b',
+                fontSize: 12, // Smaller font size for placeholder
+                textAlignVertical: 'center',
+                lineHeight: 40, // Adjust to match your input height
+                zIndex: 1,
+                opacity: 0.7,
+              }}
+              pointerEvents="none"
+            >
+              Search by item name, item code, or customer...
+            </Text>
+          ) : null}
       </View>
 
       {/* Filters */}
