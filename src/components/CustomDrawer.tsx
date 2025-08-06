@@ -11,15 +11,31 @@ import { PanGestureHandler, State, PanGestureHandlerStateChangeEvent } from 'rea
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';
-import Button from './Button'; // Import your Button component
 
-// 👉 Define props type
 type CustomDrawerProps = {
   isOpen: boolean;
   onClose: () => void;
 };
 
-// 👉 You can type your navigation if needed (optional for now)
+// 👉 Modern Drawer Button Component
+const DrawerButton: React.FC<{
+  title: string;
+  onPress: () => void;
+  icon: React.ReactNode;
+}> = ({ title, onPress, icon }) => {
+  return (
+    <TouchableOpacity style={styles.modernButton} onPress={onPress}>
+      <View style={styles.modernButtonIconContainer}>
+        {icon}
+      </View>
+      <Text style={styles.modernButtonText}>{title}</Text>
+      <View style={styles.modernButtonArrow}>
+        <Feather name="chevron-right" size={20} color="#373b4d" />
+      </View>
+    </TouchableOpacity>
+  );
+};
+
 const CustomDrawer: React.FC<CustomDrawerProps> = memo(({ isOpen, onClose }) => {
   const navigation = useNavigation<NavigationProp<any>>();
   const translateX = useRef(new Animated.Value(isOpen ? 0 : 300)).current;
@@ -101,41 +117,37 @@ const CustomDrawer: React.FC<CustomDrawerProps> = memo(({ isOpen, onClose }) => 
           ]}
         >
           <LinearGradient
-            colors={['rgba(157, 178, 191, 0)','rgba(157, 178, 191, 0.6)', 'rgba(157, 178, 191, 0.8)', 'rgb(157, 180, 191)']}
+            colors={['#fcfcfcff', '#e2e8f0', '#545a74ff']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.gradientBackground}
           />
 
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>✕</Text>
-          </TouchableOpacity>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Menu</Text>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Feather name="x" size={24} color="#ffffffff" />
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.menuContent}>
             {menuItems.map((item, index) => (
-              <View key={index} style={styles.menuItemWrapper}>
-                <Button
-                  title={item.name}
-                  onPress={() => navigateAndClose(item.route)}
-                  type="ghost"
-                  size="medium"
-                  fullWidth={true}
-                  icon={<Feather name={item.icon} size={20} color="#393247" />}
-                  iconPosition="left"
-                  style={styles.menuButton}
-                  textStyle={styles.menuButtonText}
-                  ariaLabel={`Navigate to ${item.name}`}
-                />
-              </View>
+              <DrawerButton
+                key={index}
+                title={item.name}
+                onPress={() => navigateAndClose(item.route)}
+                icon={<Feather name={item.icon} size={20} color="#fcfcfcff" />}
+              />
             ))}
           </View>
 
-          <View style={styles.bottomImageContainer}>
+          <View style={styles.footer}>
             <Image
               source={require('./images/judas2.png')}
               style={styles.bottomImage}
               resizeMode="contain"
             />
+            <Text style={styles.footerText}>v1.0.0</Text>
           </View>
         </Animated.View>
       </PanGestureHandler>
@@ -157,15 +169,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 0,
-    width: 250,
+    width: 280,
     height: '100%',
     backgroundColor: 'transparent',
     padding: 0,
     shadowColor: '#000',
     shadowOffset: { width: -2, height: 0 },
     shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowRadius: 10,
+    elevation: 10,
     zIndex: 1000,
   },
   gradientBackground: {
@@ -175,64 +187,78 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  header: {
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#0f172a',
+  },
   closeButton: {
-    position: 'absolute',
-    top: 15,
-    right: 15,
-    width: 30,
-    height: 30,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#373b4d',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1001,
-  },
-  closeButtonText: {
-    color: '#DDE6ED',
-    fontSize: 34,
-    marginRight: 15,
   },
   menuContent: {
-    marginTop: 80,
-    paddingHorizontal: 20,
+    padding: 20,
     flex: 1,
   },
-  menuItemWrapper: {
-    width: '100%',
-    marginBottom: 20,
-    alignItems: 'stretch',
-  },
-  menuButton: {
-    backgroundColor: 'rgba(157, 178, 191, 0.25)',
-    borderRadius: 12,
-    height: 55,
-    width: '100%',
-    alignSelf: 'stretch',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 0,
-    marginVertical: 0,
+  modernButton: {
     flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 12,
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  menuButtonText: {
-    color: '#393247',
-    fontSize: 18,
+  modernButtonIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#373b4d',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  modernButtonText: {
+    fontSize: 16,
     fontWeight: '500',
-    textAlign: 'left',
-    marginLeft: 12,
+    color: '#334155',
     flex: 1,
   },
-  bottomImageContainer: {
-    position: 'absolute',
-    bottom: 30,
-    left: 0,
-    right: 0,
+  modernButtonArrow: {
+    opacity: 0.7,
+  },
+  footer: {
+    padding: 20,
     alignItems: 'center',
-    justifyContent: 'center',
+   
   },
   bottomImage: {
-    width: 200,
-    height: 200,
+    width: 50,
+    height: 50,
     opacity: 0.4,
+    marginBottom: 5,
+  },
+  footerText: {
+    fontSize: 1,
+    color: '#000000ff',
   },
 });
 

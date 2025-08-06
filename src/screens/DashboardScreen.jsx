@@ -3,10 +3,8 @@ import { View, Text, ScrollView, ImageBackground } from 'react-native';
 import { useAlert } from '../context/AlertContext';
 import RecordPopup from '../components/RecordPopup';
 import styles from '../styles/DashboardScreenStyles';
-import Table from '../components/Table';
 import Button from '../components/Button';
 import DashboardSummary from '../screens/dashboard/DashboardSummary';
-import { formatDateOnly, formatNumberWithCommas } from '../components/utils/formatters';
 
 // Hooks
 import { useDashboardData } from '../hooks/useDashboardData';
@@ -16,6 +14,7 @@ import { useFormState } from '../hooks/useFormState';
 import { createFormHandlers } from '../handlers/formHandlers';
 import { saleFields, purchaseFields, creditFields } from '../config/formFields';
 import Header from '../components/Header';
+import CreditSalesCards from './dashboard/CreditSalesCards';
 
 function DashboardScreen({ navigation, onToggleDrawer }) { // Add onToggleDrawer prop
   const { showSuccess, showError, showWarning } = useAlert();
@@ -75,21 +74,11 @@ function DashboardScreen({ navigation, onToggleDrawer }) { // Add onToggleDrawer
             styles={styles}
           />
 
-          {/* Recent Credit Sales Table */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recent Credit Sales</Text>
-            <Table
-              headers={['Date', 'Item', 'Amount', 'Status', 'Customer']}
-              data={recentCredits.map((credit) => [
-                formatDateOnly(credit.creditDate),
-                credit.itemName,
-                `${formatNumberWithCommas(credit.totalAmount)} Birr`,
-                credit.paymentStatus,
-                credit.customerName,
-              ])}
-              noDataMessage="No recent credit sales"
+          {/* Recent Credit Sales */}
+         <CreditSalesCards 
+              recentCredits={recentCredits}
+              styles={styles}
             />
-          </View>
         </ScrollView>
 
         {/* Fixed Bottom Action Buttons */}

@@ -5,6 +5,7 @@ import Button from './Button';
 import styles from '../styles/RecordPopup';
 import { useAlert } from '../context/AlertContext';
 import Icon from 'react-native-vector-icons/Ionicons';
+import DatePickerInput from './DatePickerInput';
 
 const RecordPopup = ({ 
   visible, 
@@ -255,19 +256,32 @@ const RecordPopup = ({
                  </Text>
                </View>
                <View style={styles.inputWrapper}>
-                 <TextInput
-                   style={[
-                     styles.input,
-                     !isFieldEditable(field.key) && styles.disabledInput,
-                     (field.key === 'totalQuantity' || field.key === 'totalAmount' || field.key === 'remainingBalance') && styles.calculatedField
-                   ]}
-                   placeholder={field.placeholder}
-                   placeholderTextColor="#999"
-                   value={formData[field.key] || ''}
-                   onChangeText={(text) => handleFieldChange(field.key, text)}
-                   keyboardType={field.keyboardType || 'default'}
-                   editable={isFieldEditable(field.key)}
-                 />
+                 {field.key === 'dueDate' ? (
+                      <DatePickerInput
+                        style={[
+                          styles.input,
+                          !isFieldEditable(field.key) && styles.disabledInput
+                        ]}
+                        placeholder={field.placeholder}
+                        value={formData[field.key] || ''}
+                        onDateChange={(date) => handleFieldChange(field.key, date)}
+                        disabled={!isFieldEditable(field.key)}
+                      />
+                    ) : (
+                      <TextInput
+                        style={[
+                          styles.input,
+                          !isFieldEditable(field.key) && styles.disabledInput,
+                          (field.key === 'totalQuantity' || field.key === 'totalAmount' || field.key === 'remainingBalance') && styles.calculatedField
+                        ]}
+                        placeholder={field.placeholder}
+                        placeholderTextColor="#999"
+                        value={formData[field.key] || ''}
+                        onChangeText={(text) => handleFieldChange(field.key, text)}
+                        keyboardType={field.keyboardType || 'default'}
+                        editable={isFieldEditable(field.key)}
+                      />
+                    )}
                  
                  {(field.key === 'totalQuantity' || field.key === 'totalAmount' || field.key === 'remainingBalance') && (
                    <Text style={styles.calculatedHint}>

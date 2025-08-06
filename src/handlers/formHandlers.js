@@ -75,51 +75,52 @@ export const createFormHandlers = (
   };
 
   const handleFieldChange = (formType, field, value) => {
-    const currentItem = formType === 'sale' ? saleItem : 
-                       formType === 'credit' ? creditItem : purchaseItem;
-    
-    const updatedItem = { ...currentItem, [field]: value };
-    
-    // Update state first
-    switch (formType) {
-      case 'sale':
-        setSaleItem(updatedItem);
-        break;
-      case 'purchase':
-        setPurchaseItem(updatedItem);
-        break;
-      case 'credit':
-        setCreditItem(updatedItem);
-        break;
-    }
+  const currentItem = formType === 'sale' ? saleItem : 
+                     formType === 'credit' ? creditItem : purchaseItem;
+  
+  const updatedItem = { ...currentItem, [field]: value };
+  
+  // Update state first
+  switch (formType) {
+    case 'sale':
+      setSaleItem(updatedItem);
+      break;
+    case 'purchase':
+      setPurchaseItem(updatedItem);
+      break;
+    case 'credit':
+      setCreditItem(updatedItem);
+      break;
+  }
 
-    // Handle calculations and validations
-    if (formType === 'purchase') {
-      if (['cartonQuantity', 'quantityPerCarton', 'purchasePricePerCarton'].includes(field)) {
-        const calculated = calculateTotals(formType, field, value, updatedItem);
-        setPurchaseItem(calculated);
-      }
-      return;
+  // Handle calculations and validations
+  if (formType === 'purchase') {
+    if (['cartonQuantity', 'quantityPerCarton', 'purchasePricePerCarton', 'purchasePricePerPiece'].includes(field)) {
+      const calculated = calculateTotals(formType, field, value, updatedItem);
+      setPurchaseItem(calculated);
     }
+    return;
+  }
 
-    // For sale and credit forms
-    const selectedItems = { sale: selectedItem, credit: selectedCreditItem };
-    
-    if (field === 'cartonQuantity') {
-      if (validateQuantity(value, formType, selectedItems, updatedItem, showError, showWarning)) {
-        const calculated = calculateTotals(formType, field, value, updatedItem);
-        formType === 'sale' ? setSaleItem(calculated) : setCreditItem(calculated);
-      }
-    } else if (field === 'quantityPerCarton') {
-      if (validateQuantityPerCarton(value, formType, selectedItems, updatedItem, showError, showWarning)) {
-        const calculated = calculateTotals(formType, field, value, updatedItem);
-        formType === 'sale' ? setSaleItem(calculated) : setCreditItem(calculated);
-      }
-    } else if (['pricePerCarton', 'pricePerPiece'].includes(field)) {
+  // For sale and credit forms
+  const selectedItems = { sale: selectedItem, credit: selectedCreditItem };
+  
+  if (field === 'cartonQuantity') {
+    if (validateQuantity(value, formType, selectedItems, updatedItem, showError, showWarning)) {
       const calculated = calculateTotals(formType, field, value, updatedItem);
       formType === 'sale' ? setSaleItem(calculated) : setCreditItem(calculated);
     }
-  };
+  } else if (field === 'quantityPerCarton') {
+    if (validateQuantityPerCarton(value, formType, selectedItems, updatedItem, showError, showWarning)) {
+      const calculated = calculateTotals(formType, field, value, updatedItem);
+      formType === 'sale' ? setSaleItem(calculated) : setCreditItem(calculated);
+    }
+  } else if (['pricePerCarton', 'pricePerPiece', 'amountPaid'].includes(field)) {
+    // Added 'amountPaid' to trigger calculations for credit forms
+    const calculated = calculateTotals(formType, field, value, updatedItem);
+    formType === 'sale' ? setSaleItem(calculated) : setCreditItem(calculated);
+  }
+};
 
   const handleSaleSubmit = async () => {
     try {

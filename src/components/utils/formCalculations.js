@@ -16,11 +16,26 @@ export const calculateTotals = (formType, field, value, currentItem) => {
     const pricePerCarton = parseFloat(updatedItem.pricePerCarton) || 0;
     const pricePerPiece = parseFloat(updatedItem.pricePerPiece) || 0;
     
-    if (pricePerCarton > 0) {
+    if (field === 'pricePerCarton' && pricePerCarton > 0) {
+      // When pricePerCarton changes, update pricePerPiece and totalAmount
       updatedItem.totalAmount = (cartons * pricePerCarton).toString();
-    } else if (pricePerPiece > 0 && perCarton > 0) {
-      updatedItem.totalAmount = (cartons * perCarton * pricePerPiece).toString();
-      updatedItem.pricePerCarton = (perCarton * pricePerPiece).toString();
+      if (perCarton > 0) {
+        updatedItem.pricePerPiece = (pricePerCarton / perCarton).toString();
+      }
+    } else if (field === 'pricePerPiece' && pricePerPiece > 0) {
+      // When pricePerPiece changes, update pricePerCarton and totalAmount
+      if (perCarton > 0) {
+        updatedItem.pricePerCarton = (perCarton * pricePerPiece).toString();
+        updatedItem.totalAmount = (cartons * perCarton * pricePerPiece).toString();
+      }
+    } else if (['cartonQuantity', 'quantityPerCarton'].includes(field)) {
+      // When quantities change, recalculate totalAmount based on existing prices
+      if (pricePerCarton > 0) {
+        updatedItem.totalAmount = (cartons * pricePerCarton).toString();
+      } else if (pricePerPiece > 0 && perCarton > 0) {
+        updatedItem.totalAmount = (cartons * perCarton * pricePerPiece).toString();
+        updatedItem.pricePerCarton = (perCarton * pricePerPiece).toString();
+      }
     }
   }
 
@@ -31,19 +46,34 @@ export const calculateTotals = (formType, field, value, currentItem) => {
     const pricePerPiece = parseFloat(updatedItem.purchasePricePerPiece) || 0;
     const perCarton = parseInt(updatedItem.quantityPerCarton) || 0;
     
-    if (pricePerCarton > 0) {
+    if (field === 'purchasePricePerCarton' && pricePerCarton > 0) {
       updatedItem.totalAmount = (cartons * pricePerCarton).toString();
-    } else if (pricePerPiece > 0 && perCarton > 0) {
-      updatedItem.totalAmount = (cartons * perCarton * pricePerPiece).toString();
-      updatedItem.purchasePricePerCarton = (perCarton * pricePerPiece).toString();
+      if (perCarton > 0) {
+        updatedItem.purchasePricePerPiece = (pricePerCarton / perCarton).toString();
+      }
+    } else if (field === 'purchasePricePerPiece' && pricePerPiece > 0) {
+      if (perCarton > 0) {
+        updatedItem.purchasePricePerCarton = (perCarton * pricePerPiece).toString();
+        updatedItem.totalAmount = (cartons * perCarton * pricePerPiece).toString();
+      }
+    } else if (['cartonQuantity', 'quantityPerCarton'].includes(field)) {
+      if (pricePerCarton > 0) {
+        updatedItem.totalAmount = (cartons * pricePerCarton).toString();
+      } else if (pricePerPiece > 0 && perCarton > 0) {
+        updatedItem.totalAmount = (cartons * perCarton * pricePerPiece).toString();
+        updatedItem.purchasePricePerCarton = (perCarton * pricePerPiece).toString();
+      }
     }
   }
 
-  // Calculate remaining balance for credits
-  if (formType === 'credit' && (field === 'totalAmount' || field === 'amountPaid')) {
-    const total = parseFloat(updatedItem.totalAmount) || 0;
-    const paid = parseFloat(updatedItem.amountPaid) || 0;
-    updatedItem.remainingBalance = (total - paid).toString();
+  // Calculate remaining balance for credits - THIS IS THE KEY FIX
+  if (formType === 'credit') {
+    // Always recalculate remaining balance when totalAmount, amountPaid, or any field that affects totalAmount changes
+    if (['totalAmount', 'amountPaid', 'pricePerPiece', 'pricePerCarton', 'cartonQuantity', 'quantityPerCarton'].includes(field)) {
+      const total = parseFloat(updatedItem.totalAmount) || 0;
+      const paid = parseFloat(updatedItem.amountPaid) || 0;
+      updatedItem.remainingBalance = Math.max(0, total - paid).toString();
+    }
   }
 
   return updatedItem;
