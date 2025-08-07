@@ -68,6 +68,24 @@ function CreditScreen({ onToggleDrawer }) {
     }
   };
 
+  // ADD THIS NEW FUNCTION
+  const handleEditCredit = async (updatedCredit) => {
+    try {
+      // Update the credit in storage
+      await DataService.updateCredit(updatedCredit.id, updatedCredit);
+      
+      // Reload the credits to reflect changes
+      await loadCredits();
+      
+      // Show success message
+      showSuccess('Success', 'Credit information updated successfully');
+      
+    } catch (error) {
+      console.error('Error updating credit:', error);
+      showError('Error', 'Failed to update credit information: ' + error.message);
+    }
+  };
+
   const handleReturn = (credit) => {
     setCreditToReturn(credit);
     const creditAmount = parseFloat(credit.totalAmount) || 
@@ -144,6 +162,7 @@ function CreditScreen({ onToggleDrawer }) {
           onRefresh={onRefresh}
           onMarkAsPaid={handleMarkAsPaid}
           onReturn={handleReturn}
+          onEdit={handleEditCredit} // ADD THIS LINE
           formatNumberWithCommas={formatNumberWithCommas}
           formatDate={formatDate}
           insets={insets}

@@ -12,7 +12,7 @@ import {
     Platform
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import logo from '../components/images/icon.png';
+import logo from '../components/images/icon2.png';
 import backgroundImage from '../components/images/lion.jpg';
 import Button from '../components/Button';
 import { CircleFade  } from 'react-native-animated-spinkit'
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
         width: 280,
         height: 250,
         marginBottom: 30,
-        opacity: 0
+        opacity: 0.5,
         
     },
     actionContainer: {
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 20, // Increased bottom margin to account for hidden navigation
         fontSize: 16,
-        color: 'black',
+        color: '#353a5f',
         fontWeight: 'bold',
     },
 });

@@ -366,6 +366,41 @@ export const DataService = {
   }
 },
 
+// Add this to your DataService.jsx
+updateCredit: async (creditId, updatedCreditData) => {
+  try {
+    const selectedDatabase = JSON.parse(await AsyncStorage.getItem('selectedInventoryDatabase'));
+    const creditsJson = await AsyncStorage.getItem(CREDITS_KEY);
+    const allCredits = creditsJson ? JSON.parse(creditsJson) : [];
+    
+    const creditIndex = allCredits.findIndex(credit => 
+      credit.id === creditId && 
+      credit.databaseId === (selectedDatabase ? selectedDatabase.id : null)
+    );
+    
+    if (creditIndex === -1) {
+      throw new Error('Credit not found');
+    }
+    
+    // Update the credit with new data
+    allCredits[creditIndex] = {
+      ...allCredits[creditIndex],
+      ...updatedCreditData,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    await AsyncStorage.setItem(CREDITS_KEY, JSON.stringify(allCredits));
+    
+    // Return only the credits for the current database
+    return selectedDatabase
+      ? allCredits.filter((credit) => credit.databaseId === selectedDatabase.id)
+      : allCredits;
+  } catch (error) {
+    console.error('Error updating credit:', error);
+    throw error;
+  }
+},
+
   deletePurchase: async (purchaseId) => {
     try {
       const purchasesJson = await AsyncStorage.getItem(PURCHASES_KEY);

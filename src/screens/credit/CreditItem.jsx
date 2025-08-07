@@ -3,12 +3,14 @@ import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import Button from '../../components/Button';
 import styles from '../../styles/Sales';
 import Icon from 'react-native-vector-icons/Ionicons';
+import EditCreditModal from './EditCreditModal';
 
 const CreditItem = ({ 
   item, 
   index, 
   onMarkAsPaid, 
-  onReturn, 
+  onReturn,
+  onEdit,
   formatNumberWithCommas, 
   formatDate 
 }) => {
@@ -26,6 +28,7 @@ const CreditItem = ({
   };
 
   const [expanded, setExpanded] = React.useState(false);
+  const [showEditModal, setShowEditModal] = React.useState(false);
   const animatedHeight = React.useRef(new Animated.Value(0)).current;
   const animatedOpacity = React.useRef(new Animated.Value(0)).current;
   const rotationValue = React.useRef(new Animated.Value(0)).current;
@@ -81,168 +84,195 @@ const CreditItem = ({
     outputRange: [0, 900], // Adjust based on your content height
   });
 
+  const handleEditSave = async (updatedCredit) => {
+    try {
+      await onEdit(updatedCredit);
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Error saving edit:', error);
+    }
+  };
   return (
-    <View style={[styles.saleItem, index % 2 === 0 && styles.saleItemEven]}>
-      <TouchableOpacity 
-        onPress={() => setExpanded(!expanded)}
-        activeOpacity={0.8}
-      >
-        <View style={styles.saleHeader}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.saleDate}>{formatDate(item.creditDate || item.date) || 'No Date'}</Text>
-            <Text style={[styles.statusBadge, { 
-              backgroundColor: statusColors[item.paymentStatus] || '#FF9500',
-            }]}>
-              {item.paymentStatus || 'Pending'}
-            </Text>
+    <>
+      <View style={[styles.saleItem, index % 2 === 0 && styles.saleItemEven]}>
+        <TouchableOpacity 
+          onPress={() => setExpanded(!expanded)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.saleHeader}>
+            <View style={styles.headerLeft}>
+              <Text style={styles.saleDate}>{formatDate(item.creditDate || item.date) || 'No Date'}</Text>
+              <Text style={[styles.statusBadge, { 
+                backgroundColor: statusColors[item.paymentStatus] || '#FF9500',
+              }]}>
+                {item.paymentStatus || 'Pending'}
+              </Text>
+            </View>
+            <View style={styles.headerRight}>
+              <Text style={styles.saleAmount}>
+                {formatNumberWithCommas(creditAmount) || '0'} Birr
+              </Text>
+              <Animated.View style={{ transform: [{ rotate: rotation }] }}>
+                <Icon 
+                  name="chevron-down" 
+                  size={20} 
+                  color="#64748b" 
+                />
+              </Animated.View>
+            </View>
           </View>
-          <View style={styles.headerRight}>
-            <Text style={styles.saleAmount}>
-              {formatNumberWithCommas(creditAmount) || '0'} Birr
-            </Text>
-            <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-              <Icon 
-                name="chevron-down" 
-                size={20} 
-                color="#64748b" 
-              />
-            </Animated.View>
+          
+          <View style={styles.saleDetails}>
+            <View style={styles.saleInfo}>
+              <Text style={styles.itemName}>{item.itemName || 'N/A'}</Text>
+              <Text style={styles.itemDetails}>
+                Code: {item.itemCode || 'N/A'} | Qty: {formatNumberWithCommas(item.cartonQuantity || item.totalQuantity || 0)}
+              </Text>
+              <Text style={styles.customerName}>
+                Customer: {item.customerName || 'N/A'}
+              </Text>
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
         
-        <View style={styles.saleDetails}>
-          <View style={styles.saleInfo}>
-            <Text style={styles.itemName}>{item.itemName || 'N/A'}</Text>
-            <Text style={styles.itemDetails}>
-              Code: {item.itemCode || 'N/A'} | Qty: {formatNumberWithCommas(item.cartonQuantity || item.totalQuantity || 0)}
-            </Text>
-            <Text style={styles.customerName}>
-              Customer: {item.customerName || 'N/A'}
-            </Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-      
-      <Animated.View 
-        style={[
-          styles.expandedContainer,
-          {
-            maxHeight: maxHeight,
-            opacity: animatedOpacity,
-          }
-        ]}
-      >
-        <View style={styles.expandedDetails}>
-          {/* Product Information Section */}
-          <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>Product Details</Text>
-            <View style={styles.infoGrid}>
-              <View style={styles.infoCard}>
-                <Text style={styles.infoCardLabel}>Price Per Piece</Text>
-                <Text style={styles.infoCardValue}>
-                  {formatNumberWithCommas(item.pricePerPiece || 0)} Birr
-                </Text>
+        <Animated.View 
+          style={[
+            styles.expandedContainer,
+            {
+              maxHeight: maxHeight,
+              opacity: animatedOpacity,
+            }
+          ]}
+        >
+          <View style={styles.expandedDetails}>
+            {/* All your existing expanded content remains the same */}
+            {/* Product Information Section */}
+            <View style={styles.infoSection}>
+              <Text style={styles.sectionTitle}>Product Details</Text>
+              <View style={styles.infoGrid}>
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoCardLabel}>Price Per Piece</Text>
+                  <Text style={styles.infoCardValue}>
+                    {formatNumberWithCommas(item.pricePerPiece || 0)} Birr
+                  </Text>
+                </View>
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoCardLabel}>Qty Per Carton</Text>
+                  <Text style={styles.infoCardValue}>
+                    {formatNumberWithCommas(item.quantityPerCarton || 0)}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.infoCard}>
-                <Text style={styles.infoCardLabel}>Qty Per Carton</Text>
-                <Text style={styles.infoCardValue}>
-                  {formatNumberWithCommas(item.quantityPerCarton || 0)}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.detailLabel}>Total Quantity:</Text>
-              <Text style={styles.detailValue}>
-                {formatNumberWithCommas(item.totalQuantity || 0)} pieces
-              </Text>
-            </View>
-          </View>
-
-          {/* Customer Information Section */}
-          <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>Customer Information</Text>
-            {item.phoneNumber && (
               <View style={styles.infoRow}>
-                <Text style={styles.detailLabel}>Phone:</Text>
-                <Text style={styles.detailValue}>{item.phoneNumber}</Text>
-              </View>
-            )}
-            {item.place && (
-              <View style={styles.infoRow}>
-                <Text style={styles.detailLabel}>Location:</Text>
-                <Text style={styles.detailValue}>{item.place}</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Payment Information Section */}
-          <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>Payment Details</Text>
-            <View style={styles.paymentGrid}>
-              <View style={[styles.paymentCard, styles.paidCard]}>
-                <Text style={styles.paymentCardLabel}>Amount Paid</Text>
-                <Text style={styles.paymentCardValue}>
-                  {formatNumberWithCommas(item.amountPaid || 0)} Birr
-                </Text>
-              </View>
-              <View style={[styles.paymentCard, styles.remainingCard]}>
-                <Text style={styles.paymentCardLabel}>Remaining</Text>
-                <Text style={styles.paymentCardValue}>
-                  {formatNumberWithCommas(item.remainingBalance || 0)} Birr
+                <Text style={styles.detailLabel}>Total Quantity:</Text>
+                <Text style={styles.detailValue}>
+                  {formatNumberWithCommas(item.totalQuantity || 0)} pieces
                 </Text>
               </View>
             </View>
-            {item.dueDate && (
-              <View style={styles.dueDateContainer}>
-                <Icon name="time-outline" size={16} color="#FF9500" />
-                <Text style={styles.dueDateText}>
-                  Due: {formatDate(item.dueDate)}
+
+            {/* Customer Information Section */}
+            <View style={styles.infoSection}>
+              <Text style={styles.sectionTitle}>Customer Information</Text>
+              {item.phoneNumber && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.detailLabel}>Phone:</Text>
+                  <Text style={styles.detailValue}>{item.phoneNumber}</Text>
+                </View>
+              )}
+              {item.place && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.detailLabel}>Location:</Text>
+                  <Text style={styles.detailValue}>{item.place}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Payment Information Section */}
+            <View style={styles.infoSection}>
+              <Text style={styles.sectionTitle}>Payment Details</Text>
+              <View style={styles.paymentGrid}>
+                <View style={[styles.paymentCard, styles.paidCard]}>
+                  <Text style={styles.paymentCardLabel}>Amount Paid</Text>
+                  <Text style={styles.paymentCardValue}>
+                    {formatNumberWithCommas(item.amountPaid || 0)} Birr
+                  </Text>
+                </View>
+                <View style={[styles.paymentCard, styles.remainingCard]}>
+                  <Text style={styles.paymentCardLabel}>Remaining</Text>
+                  <Text style={styles.paymentCardValue}>
+                    {formatNumberWithCommas(item.remainingBalance || 0)} Birr
+                  </Text>
+                </View>
+              </View>
+              {item.dueDate && (
+                <View style={styles.dueDateContainer}>
+                  <Icon name="time-outline" size={16} color="#FF9500" />
+                  <Text style={styles.dueDateText}>
+                    Due: {formatDate(item.dueDate)}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Additional Information */}
+            {item.plateNumber && (
+              <View style={styles.additionalInfo}>
+                <Icon name="car-outline" size={16} color="#64748b" />
+                <Text style={styles.additionalInfoText}>
+                  Plate: {item.plateNumber}
                 </Text>
               </View>
             )}
-          </View>
 
-          {/* Additional Information */}
-          {item.plateNumber && (
-            <View style={styles.additionalInfo}>
-              <Icon name="car-outline" size={16} color="#64748b" />
-              <Text style={styles.additionalInfoText}>
-                Plate: {item.plateNumber}
-              </Text>
-            </View>
-          )}
-
-          {/* Notes Section */}
-          {item.notes && (
-            <View style={styles.notesSection}>
-              <Text style={styles.sectionTitle}>Notes</Text>
-              <View style={styles.notesContent}>
-                <Icon name="document-text-outline" size={16} color="#64748b" />
-                <Text style={styles.notesText}>{item.notes}</Text>
+            {/* Notes Section */}
+            {item.notes && (
+              <View style={styles.notesSection}>
+                <Text style={styles.sectionTitle}>Notes</Text>
+                <View style={styles.notesContent}>
+                  <Icon name="document-text-outline" size={16} color="#64748b" />
+                  <Text style={styles.notesText}>{item.notes}</Text>
+                </View>
               </View>
-            </View>
-          )}
+            )}
 
-          {/* Action Buttons */}
-          <View style={styles.actionButtonsContainer}>
-            <Button
-              type="primary"
-              size="sm"
-              title="Mark as Paid"
-              onPress={() => onMarkAsPaid(item)}
-              style={styles.actionButton}
-            />
-            <Button
-              type="danger"
-              size="sm"
-              title="Return Item"
-              onPress={() => onReturn(item)}
-              style={styles.actionButton}
-            />
+            {/* Action Buttons - Updated with Edit button */}
+            <View style={styles.actionButtonsContainer}>
+              <Button
+                type="secondary"
+                size="sm"
+                title="Edit info"
+                onPress={() => setShowEditModal(true)}
+                style={styles.actionButton}
+              />
+              <Button
+                type="primary"
+                size="sm"
+                title="Mark as Paid"
+                onPress={() => onMarkAsPaid(item)}
+                style={styles.actionButton}
+              />
+              <Button
+                type="danger"
+                size="sm"
+                title="Return Item"
+                onPress={() => onReturn(item)}
+                style={styles.actionButton}
+              />
+            </View>
           </View>
-        </View>
-      </Animated.View>
-    </View>
+        </Animated.View>
+      </View>
+
+      {/* Edit Modal */}
+      <EditCreditModal
+        visible={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        creditItem={item}
+        onSave={handleEditSave}
+        formatNumberWithCommas={formatNumberWithCommas}
+      />
+    </>
   );
 };
 

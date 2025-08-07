@@ -10,6 +10,7 @@ const CreditList = ({
   onRefresh, 
   onMarkAsPaid, 
   onReturn, 
+  onEdit, // ADD THIS PROP
   formatNumberWithCommas, 
   formatDate,
   insets,
@@ -23,6 +24,7 @@ const CreditList = ({
       index={index}
       onMarkAsPaid={onMarkAsPaid}
       onReturn={onReturn}
+      onEdit={onEdit} // ADD THIS LINE
       formatNumberWithCommas={formatNumberWithCommas}
       formatDate={formatDate}
     />
