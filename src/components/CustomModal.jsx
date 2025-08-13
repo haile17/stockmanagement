@@ -39,11 +39,11 @@ const CustomModal = ({
     }
   };
 
-  const getButtonType = () => {
+  const getConfirmButtonColor = () => {
     switch (type) {
       case 'danger': return 'danger';
       case 'success': return 'success';
-      case 'warning': return 'secondary';
+      case 'warning': return 'primary'; // Changed from 'secondary' to 'primary'
       default: return 'primary';
     }
   };
@@ -68,24 +68,26 @@ const CustomModal = ({
           {/* Buttons */}
           <View style={styles.buttonContainer}>
             {showCancel && (
-              <Button
-                title={cancelText}
-                onPress={onCancel}
-                color="primary"
-                variant="solid"
-                size="small"
-                style={{ flex: 1 }}
-              />
+              <View style={styles.buttonWrapper}>
+                <Button
+                  title={cancelText}
+                  onPress={onCancel}
+                  color="secondary"
+                  variant="outline"
+                  size="medium"
+                />
+              </View>
             )}
             
-            <Button
-              title={confirmText}
-              onPress={onConfirm}
-              color={getButtonType()}
-              variant={type === 'warning' ? 'outline' : 'solid'}
-              size="small"
-              style={{ flex: 1 }}
-            />
+            <View style={styles.buttonWrapper}>
+              <Button
+                title={confirmText}
+                onPress={onConfirm}
+                color={getConfirmButtonColor()}
+                variant={type === 'warning' ? 'outline' : 'solid'}
+                size="medium"
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -258,6 +260,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 12,
+  },
+  buttonWrapper: {
+    flex: 1,
+    maxWidth: 120, // Prevents buttons from becoming too wide
   },
 });
 

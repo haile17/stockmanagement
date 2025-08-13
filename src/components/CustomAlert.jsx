@@ -35,20 +35,20 @@ const CustomAlert = ({
     }
   };
 
-  const getButtonType = () => {
-  switch (type) {
-    case 'success':
-      return 'success';
-    case 'error':
-      return 'danger';
-    case 'warning':
-      return 'primary'; // or create a warning type in Button component
-    case 'confirmation':
-      return 'primary';
-    default:
-      return 'primary';
-  }
-};
+  const getButtonColor = () => {
+    switch (type) {
+      case 'success':
+        return 'success';
+      case 'error':
+        return 'danger';
+      case 'warning':
+        return 'primary'; // You could add a 'warning' color to Button if needed
+      case 'confirmation':
+        return 'primary';
+      default:
+        return 'primary';
+    }
+  };
 
   const getIconColor = () => {
     switch (type) {
@@ -66,39 +66,40 @@ const CustomAlert = ({
   };
 
   const renderButtons = () => {
-  if (buttons.length === 0) {
-    return (
-      <Button
-        title="OK"
-        onPress={onClose}
-        type="primary"
-        size="medium"
-        style={styles.singleButton}
-      />
-    );
-  }
-
-  return (
-    <View style={styles.buttonContainer}>
-      {buttons.map((button, index) => (
+    if (buttons.length === 0) {
+      return (
         <Button
-          key={index}
-          title={button.text}
-          onPress={() => {
-            if (button.onPress) {
-              button.onPress();
-            }
-            onClose();
-          }}
-          type={button.style === 'cancel' ? 'secondary' : getButtonType()}
-          variant={button.style === 'cancel' ? 'outline' : 'solid'}
+          title="OK"
+          onPress={onClose}
+          color="primary"
           size="medium"
-          style={buttons.length === 1 ? styles.singleButton : { flex: 1 }}
+          variant="solid"
+          fullWidth={false}
         />
-      ))}
-    </View>
-  );
-};
+      );
+    }
+
+    return (
+      <View style={styles.buttonContainer}>
+        {buttons.map((button, index) => (
+          <Button
+            key={index}
+            title={button.text}
+            onPress={() => {
+              if (button.onPress) {
+                button.onPress();
+              }
+              onClose();
+            }}
+            color={button.style === 'cancel' ? 'secondary' : getButtonColor()}
+            variant={button.style === 'cancel' ? 'outline' : 'solid'}
+            size="medium"
+            fullWidth={buttons.length === 1}
+          />
+        ))}
+      </View>
+    );
+  };
 
   return (
     <Modal
@@ -209,11 +210,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
     alignItems: 'stretch',
-  },
-  singleButton: {
-   alignSelf: 'center',
-    minWidth: 100,
-    flex: 0,
   },
 });
 
