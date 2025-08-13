@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import StockAlertManager from '../components/StockAlertManager';
+
 
 const INVENTORY_KEY = 'inventory';
 const SALES_KEY = 'sales';
@@ -192,6 +194,11 @@ export const DataService = {
       }
     }
 
+    await StockAlertManager.sendSaleNotification(newSale);
+    
+    // Check for low stock after sale
+    await StockAlertManager.checkLowStockItems();
+    
     return newSale;
   },
 
@@ -358,6 +365,12 @@ export const DataService = {
 
       await DataService.saveInventoryItem(inventoryItem);
     }
+
+    // After successfully saving purchase, send notification
+    await StockAlertManager.sendPurchaseNotification(newPurchase);
+    
+    // Check if any items are now above minimum stock
+    await StockAlertManager.checkLowStockItems();
 
     return newPurchase;
   } catch (error) {
