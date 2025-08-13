@@ -239,22 +239,25 @@ const CreditItem = ({
             {/* Action Buttons - Updated with Edit button */}
             <View style={styles.actionButtonsContainer}>
               <Button
-                type="secondary"
-                size="sm"
+                color="secondary"
+                variant='outline'
+                size="small"
                 title="Edit info"
                 onPress={() => setShowEditModal(true)}
                 style={styles.actionButton}
               />
               <Button
-                type="primary"
-                size="sm"
+                color="secondary"
+                variant='outline'
+                size="small"
                 title="Mark as Paid"
                 onPress={() => onMarkAsPaid(item)}
                 style={styles.actionButton}
               />
               <Button
-                type="danger"
-                size="sm"
+                color="secondary"
+                variant='outline'
+                size="small"
                 title="Return Item"
                 onPress={() => onReturn(item)}
                 style={styles.actionButton}

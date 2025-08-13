@@ -69,7 +69,7 @@ const TutorialModal = ({ visible, onClose, onProceed }) => {
           <View style={styles.tutorialActions}>
             <ButtonGroup direction="row" spacing={12} fullWidth>
               <Button
-                type="secondary"
+                color="secondary"
                 variant="outline"
                 size="medium"
                 onPress={onClose}
@@ -77,7 +77,8 @@ const TutorialModal = ({ visible, onClose, onProceed }) => {
                 style={{ flex: 1 }}
               />
               <Button
-                type="gradient"
+                color="primary"
+                variant="solid"
                 size="medium"
                 onPress={onProceed}
                 title="Proceed to Select File"
