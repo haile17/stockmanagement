@@ -37,6 +37,28 @@ export const useFormState = () => {
     }
   };
 
+  // Close popup helper functions
+  const closeAllPopups = () => {
+    setShowSalePopup(false);
+    setShowPurchasePopup(false);
+    setShowCreditPopup(false);
+  };
+
+  const closeSalePopup = () => {
+    setShowSalePopup(false);
+    resetForm('sale');
+  };
+
+  const closePurchasePopup = () => {
+    setShowPurchasePopup(false);
+    resetForm('purchase');
+  };
+
+  const closeCreditPopup = () => {
+    setShowCreditPopup(false);
+    resetForm('credit');
+  };
+
   return {
     showSalePopup, setShowSalePopup,
     showPurchasePopup, setShowPurchasePopup,
@@ -50,6 +72,10 @@ export const useFormState = () => {
     showCreditNameDropdown, setShowCreditNameDropdown,
     selectedCreditItem, setSelectedCreditItem,
     filteredCreditInventory, setFilteredCreditInventory,
-    resetForm
+    resetForm,
+    closeAllPopups,
+    closeSalePopup,
+    closePurchasePopup,
+    closeCreditPopup
   };
 };

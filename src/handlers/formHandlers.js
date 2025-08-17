@@ -16,7 +16,11 @@ export const createFormHandlers = (
     selectedCreditItem, setSelectedCreditItem,
     setFilteredInventory, setShowNameDropdown,
     setFilteredCreditInventory, setShowCreditNameDropdown,
-    resetForm
+    resetForm,
+    // Add popup state setters
+    setShowSalePopup,
+    setShowPurchasePopup,
+    setShowCreditPopup
   } = formState;
 
   const handleNameSearch = (text, formType) => {
@@ -154,9 +158,17 @@ export const createFormHandlers = (
       };
       
       await DataService.saveSale(saleData);
+      
+      // Reset form first
       resetForm('sale');
-      loadDashboardData();
+      
+      // Close popup immediately
+      setShowSalePopup(false);
+      
+      // Load dashboard data and show success message
+      await loadDashboardData();
       showSuccess('Success', 'Sale recorded successfully');
+      
     } catch (error) {
       showError('Error', error.message);
     }
@@ -206,9 +218,16 @@ export const createFormHandlers = (
         await DataService.saveInventoryItem(inventoryItem);
       }
       
+      // Reset form first
       resetForm('purchase');
+      
+      // Close popup immediately
+      setShowPurchasePopup(false);
+      
+      // Load dashboard data and show success message
       await loadDashboardData();
       showSuccess('Success', 'Purchase recorded and inventory updated successfully');
+      
     } catch (error) {
       console.error('Purchase submit error:', error);
       showError('Error', error.message);
@@ -238,9 +257,17 @@ export const createFormHandlers = (
       };
       
       await DataService.saveCreditSale(creditData);
+      
+      // Reset form first
       resetForm('credit');
-      loadDashboardData();
+      
+      // Close popup immediately
+      setShowCreditPopup(false);
+      
+      // Load dashboard data and show success message
+      await loadDashboardData();
       showSuccess('Success', 'Credit sale recorded successfully');
+      
     } catch (error) {
       showError('Error', error.message);
     }

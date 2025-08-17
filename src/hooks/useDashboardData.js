@@ -18,20 +18,30 @@ export const useDashboardData = () => {
       const salesData = await DataService.getSales() || [];
       const today = new Date().toISOString().split('T')[0];
 
-      const todaysSales = salesData
+      // Fix: Convert totalAmount to number before adding
+      const todaysSalesTotal = salesData
         .filter(sale => sale?.saleDate?.split('T')[0] === today)
-        .reduce((total, sale) => total + (sale.totalAmount || 0), 0);
+        .reduce((total, sale) => {
+          const amount = Number(sale.totalAmount) || 0;
+          return total + amount;
+        }, 0);
 
-      setTodaysSales(todaysSales);
+      setTodaysSales(todaysSalesTotal);
 
       const purchasesData = await DataService.getPurchases() || [];
       setRecentPurchases(purchasesData.length);
 
       const creditsData = await DataService.getCredits() || [];
-      const totalCreditSales = creditsData.reduce((total, credit) => total + (credit.totalAmount || 0), 0);
+      
+      // Fix: Convert totalAmount to number before adding
+      const totalCreditSales = creditsData.reduce((total, credit) => {
+        const amount = Number(credit.totalAmount) || 0;
+        return total + amount;
+      }, 0);
+      
       setCreditSales(totalCreditSales);
-
       setRecentCredits(creditsData.slice(0, 5));
+      
     } catch (error) {
       console.error("Error loading dashboard data:", error);
       setTodaysSales(0);

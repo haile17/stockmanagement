@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, Alert } from 'react-native';
 import { formatDateOnly, formatNumberWithCommas } from '../../components/utils/formatters';
 
 const CreditSalesCards = ({ recentCredits, styles }) => {
@@ -26,6 +26,34 @@ const CreditSalesCards = ({ recentCredits, styles }) => {
         return '#FFEBEE';
       default:
         return '#F5F5F5';
+    }
+  };
+
+  const handlePhonePress = async (phoneNumber) => {
+    try {
+      // Clean the phone number (remove any spaces, dashes, or special characters except +)
+      const cleanNumber = phoneNumber.replace(/[^\d+]/g, '');
+      const phoneUrl = `tel:${cleanNumber}`;
+      
+      // Check if the device can handle the phone URL
+      const canOpen = await Linking.canOpenURL(phoneUrl);
+      
+      if (canOpen) {
+        await Linking.openURL(phoneUrl);
+      } else {
+        Alert.alert(
+          'Unable to make call',
+          'Your device does not support phone calls or the phone app is not available.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'Failed to open phone dialer. Please try again.',
+        [{ text: 'OK' }]
+      );
+      console.error('Error opening phone dialer:', error);
     }
   };
 
@@ -93,7 +121,13 @@ const CreditSalesCards = ({ recentCredits, styles }) => {
             {(credit.phoneNumber || credit.place || credit.plateNumber) && (
               <View style={cardStyles.additionalInfo}>
                 {credit.phoneNumber && (
-                  <Text style={cardStyles.additionalText}>📞 {credit.phoneNumber}</Text>
+                  <TouchableOpacity 
+                    style={cardStyles.phoneContainer}
+                    onPress={() => handlePhonePress(credit.phoneNumber)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={cardStyles.phoneText}>📞 {credit.phoneNumber}</Text>
+                  </TouchableOpacity>
                 )}
                 {credit.place && (
                   <Text style={cardStyles.additionalText}>📍 {credit.place}</Text>
@@ -237,6 +271,19 @@ export const cardStyles = {
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
+  },
+  phoneContainer: {
+    backgroundColor: '#e3f2fd',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2196f3',
+  },
+  phoneText: {
+    fontSize: 12,
+    color: '#1976d2',
+    fontWeight: '600',
   },
   balanceInfo: {
     flexDirection: 'row',
