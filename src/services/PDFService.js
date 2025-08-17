@@ -8,20 +8,47 @@ import { formatCurrentDateTime, formatDateOnly, formatNumberWithCommas } from '.
 
 export const PDFService = {
   // Generate HTML content for PDF
-  generateHTMLContent: (reportData, startDate, endDate, selectedReportType) => {
-    const { title, headers, data, rawData } = reportData;
-    const totalAmount = rawData.reduce((sum, item) => 
-      sum + (parseFloat(item.quantity) * parseFloat(item.price)), 0
+ generateHTMLContent: (reportData, startDate, endDate, selectedReportType) => {
+  const { title, headers, data, rawData } = reportData;
+  
+  // Calculate total amount based on report type
+  let totalAmount = 0;
+  if (selectedReportType === 'sales') {
+    totalAmount = rawData.reduce((sum, item) => 
+      sum + ((item.cartonQuantity || 0) * (item.pricePerCarton || 0)), 0
     );
+  } else if (selectedReportType === 'purchases') {
+    totalAmount = rawData.reduce((sum, item) => 
+      sum + ((item.cartonQuantity || 0) * (item.purchasePricePerCarton || 0)), 0
+    );
+  } else if (selectedReportType === 'credits') {
+    totalAmount = rawData.reduce((sum, item) => 
+      sum + ((item.cartonQuantity || 0) * (item.pricePerCarton || 0)), 0
+    );
+  } else if (selectedReportType === 'inventory') {
+    totalAmount = rawData.reduce((sum, item) => 
+      sum + ((item.cartonQuantity || 0) * (item.purchasePricePerCarton || 0)), 0
+    );
+  }
 
-    let tableRows = '';
-    data.forEach(row => {
-      tableRows += `
-        <tr>
-          ${row.map(cell => `<td style="border: 1px solid #ddd; padding: 8px; text-align: left;">${cell}</td>`).join('')}
-        </tr>
-      `;
-    });
+   let tableRows = '';
+  data.forEach(row => {
+    tableRows += `
+      <tr>
+        ${row.map(cell => `<td style="border: 1px solid #ddd; padding: 8px; text-align: left;">${cell}</td>`).join('')}
+      </tr>
+    `;
+  });
+
+   const summarySection = `
+    <div class="summary">
+      <h3>Summary</h3>
+      <p><strong>Total Records:</strong> ${data.length}</p>
+      <p><strong>Total Amount:</strong> ${formatNumberWithCommas(totalAmount)} Birr</p>
+      ${selectedReportType === 'credits' ? `<p><strong>Outstanding Credits:</strong> ${rawData.filter(item => (item.paymentStatus || 'Unpaid') === 'Unpaid').length}</p>` : ''}
+      ${selectedReportType === 'inventory' ? `<p><strong>Low Stock Items:</strong> ${rawData.filter(item => item.minStockAlert && (item.cartonQuantity || 0) <= (item.minStockAlert || 0)).length}</p>` : ''}
+    </div>
+  `;
 
     return `
       <!DOCTYPE html>
@@ -124,12 +151,7 @@ export const PDFService = {
             </tbody>
           </table>
 
-          <div class="summary">
-            <h3>Summary</h3>
-            <p><strong>Total Records:</strong> ${data.length}</p>
-            <p><strong>Total Amount:</strong> ${formatNumberWithCommas(totalAmount)} Birr</p>
-            ${selectedReportType === 'credits' ? `<p><strong>Outstanding Credits:</strong> ${rawData.filter(item => item.status === 'Unpaid').length}</p>` : ''}
-          </div>
+        ${summarySection}
 
           <div class="footer">
             <div class="footer-section">
@@ -263,74 +285,145 @@ export const PDFService = {
   }
 },
 
- // Share PDF using system share dialog
+// Share PDF using system share dialog
 sharePDF: async (filePath, fileName) => {
   try {
-    // Ensure file exists
     const fileExists = await RNFS.exists(filePath);
     if (!fileExists) {
       throw new Error('PDF file not found');
     }
 
-    const shareOptions = {
-      title: 'Share Report',
-      message: 'Please find the attached report',
-      url: `file://${filePath}`,
-      type: 'application/pdf',
-      filename: fileName,
-    };
+    const cachePath = `${RNFS.CachesDirectoryPath}/${fileName}`;
+    
+    try {
+      // Copy to cache directory for better accessibility
+      await RNFS.copyFile(filePath, cachePath);
+      
+      const shareOptions = {
+        title: 'Share Report',
+        message: 'Please find the attached report',
+        url: `file://${cachePath}`,
+        type: 'application/pdf',
+        filename: fileName || 'report.pdf',
+        subject: 'Report Document', // Add subject for better compatibility
+      };
 
-    await Share.open(shareOptions);
+      const result = await Share.open(shareOptions);
+      console.log('Share result:', result);
+      
+      // Clean up after share
+      setTimeout(async () => {
+        try {
+          await RNFS.unlink(cachePath);
+        } catch (cleanupError) {
+          console.log('Cache cleanup error:', cleanupError.message);
+        }
+      }, 10000);
+      
+    } catch (fileShareError) {
+      // Check if it's a user cancellation (not an actual error)
+      if (fileShareError.message && 
+          (fileShareError.message.includes('User did not share') || 
+           fileShareError.message.includes('cancelled') ||
+           fileShareError.message.includes('CANCELLED'))) {
+        console.log('User cancelled sharing');
+        return; // Don't treat as error
+      }
+      
+      console.log('File sharing failed, trying base64:', fileShareError.message);
+      
+      // Fallback to base64
+      const base64Data = await RNFS.readFile(filePath, 'base64');
+      const shareOptions = {
+        title: 'Share Report',
+        message: 'Please find the attached report',
+        url: `data:application/pdf;base64,${base64Data}`,
+        type: 'application/pdf',
+        filename: fileName || 'report.pdf',
+        subject: 'Report Document',
+      };
+
+      const result = await Share.open(shareOptions);
+      console.log('Base64 share result:', result);
+    }
+    
   } catch (error) {
     console.error('Error sharing PDF:', error);
-    if (error.message !== 'User did not share') {
-      throw new Error('Failed to share PDF: ' + error.message);
+    
+    // Don't throw error for user cancellations
+    if (error.message && 
+        (error.message.includes('User did not share') || 
+         error.message.includes('cancelled') ||
+         error.message.includes('CANCELLED') ||
+         error.message.includes('getScheme'))) {
+      console.log('Share operation cancelled or completed');
+      return;
     }
+    
+    throw new Error('Failed to share PDF: ' + error.message);
   }
 },
 
 // Share via WhatsApp
 shareViaWhatsApp: async (filePath) => {
   try {
-    // Ensure file exists
     const fileExists = await RNFS.exists(filePath);
     if (!fileExists) {
       throw new Error('PDF file not found');
     }
 
     const fileName = filePath.split('/').pop();
+    const cachePath = `${RNFS.CachesDirectoryPath}/${fileName}`;
     
-    // Use direct file sharing instead of deep linking
-    const fileUri = Platform.OS === 'android' 
-      ? `file://${filePath}` 
-      : filePath;
-
-    const shareOptions = {
-      title: 'Share Report via WhatsApp',
-      message: 'Please find the attached report',
-      url: fileUri,
-      type: 'application/pdf',
-      social: Share.Social.WHATSAPP,
-    };
-
     try {
+      // Copy to cache directory
+      await RNFS.copyFile(filePath, cachePath);
+      
+      const shareOptions = {
+        message: 'Please find the attached report',
+        url: `file://${cachePath}`,
+        type: 'application/pdf',
+        filename: fileName,
+        social: Share.Social.WHATSAPP,
+      };
+
       await Share.shareSingle(shareOptions);
+      
+      // Clean up after share
+      setTimeout(async () => {
+        try {
+          await RNFS.unlink(cachePath);
+        } catch (cleanupError) {
+          console.log('Cache cleanup error:', cleanupError.message);
+        }
+      }, 10000);
+      
     } catch (whatsappError) {
-      // If WhatsApp-specific sharing fails, use general share
-      console.log('WhatsApp specific sharing failed, using general share');
-      await PDFService.sharePDF(filePath, fileName);
+      console.log('WhatsApp file sharing failed, trying base64:', whatsappError.message);
+      
+      // Fallback to base64
+      const base64Data = await RNFS.readFile(filePath, 'base64');
+      const shareOptions = {
+        message: 'Please find the attached report',
+        url: `data:application/pdf;base64,${base64Data}`,
+        type: 'application/pdf',
+        filename: fileName,
+        social: Share.Social.WHATSAPP,
+      };
+
+      await Share.shareSingle(shareOptions);
     }
+    
   } catch (error) {
     console.error('Error sharing via WhatsApp:', error);
-    // Fallback to regular share
-    await PDFService.sharePDF(filePath, fileName);
+    // Final fallback to general share
+    await PDFService.sharePDF(filePath, filePath.split('/').pop());
   }
 },
 
 // Share via Telegram
 shareViaTelegram: async (filePath) => {
   try {
-    // Ensure file exists
     const fileExists = await RNFS.exists(filePath);
     if (!fileExists) {
       throw new Error('PDF file not found');
@@ -338,30 +431,52 @@ shareViaTelegram: async (filePath) => {
 
     const fileName = filePath.split('/').pop();
     
-    // Use direct file sharing instead of deep linking
-    const fileUri = Platform.OS === 'android' 
-      ? `file://${filePath}` 
-      : filePath;
-
-    const shareOptions = {
-      title: 'Share Report via Telegram',
-      message: 'Please find the attached report',
-      url: fileUri,
-      type: 'application/pdf',
-      social: Share.Social.TELEGRAM,
-    };
-
+    // Use app's cache directory instead of public Downloads (no permissions needed)
+    const cachePath = `${RNFS.CachesDirectoryPath}/${fileName}`;
+    
     try {
+      // Copy to cache directory
+      await RNFS.copyFile(filePath, cachePath);
+      
+      const shareOptions = {
+        message: 'Please find the attached report',
+        url: `file://${cachePath}`,
+        type: 'application/pdf',
+        filename: fileName,
+        social: Share.Social.TELEGRAM,
+      };
+
       await Share.shareSingle(shareOptions);
+      
+      // Clean up after successful share
+      setTimeout(async () => {
+        try {
+          await RNFS.unlink(cachePath);
+        } catch (cleanupError) {
+          console.log('Cache cleanup error:', cleanupError.message);
+        }
+      }, 10000);
+      
     } catch (telegramError) {
-      // If Telegram-specific sharing fails, use general share
-      console.log('Telegram specific sharing failed, using general share');
-      await PDFService.sharePDF(filePath, fileName);
+      console.log('Telegram file sharing failed, trying base64:', telegramError.message);
+      
+      // Fallback to base64 approach
+      const base64Data = await RNFS.readFile(filePath, 'base64');
+      const shareOptions = {
+        message: 'Please find the attached report',
+        url: `data:application/pdf;base64,${base64Data}`,
+        type: 'application/pdf',
+        filename: fileName,
+        social: Share.Social.TELEGRAM,
+      };
+      
+      await Share.shareSingle(shareOptions);
     }
+    
   } catch (error) {
     console.error('Error sharing via Telegram:', error);
-    // Fallback to regular share
-    await PDFService.sharePDF(filePath, fileName);
+    // Final fallback to general share
+    await PDFService.sharePDF(filePath, filePath.split('/').pop());
   }
 },
 
@@ -390,71 +505,95 @@ shareViaTelegram: async (filePath) => {
   },
 
   // Format report data based on type
-  formatReportData: (selectedReportType, salesData, purchasesData, creditsData, startDate, endDate) => {
-    let data = [];
-    let headers = [];
-    
-    switch (selectedReportType) {
-      case 'sales':
-        data = PDFService.filterDataByDate(salesData, startDate, endDate);
-        headers = ['Date', 'Item', 'Part Number', 'Quantity', 'Price', 'Total', 'Customer', 'Status'];
-        return {
-          data: data.map(sale => [
-            formatDateOnly(sale.date),
-            sale.name,
-            sale.partNumber,
-            sale.quantity,
-            `${formatNumberWithCommas(sale.price)} Birr`,
-            `${formatNumberWithCommas(sale.quantity * sale.price)} Birr`,
-            sale.customer || 'N/A',
-            sale.status || 'Completed'
-          ]),
-          headers,
-          rawData: data,
-          title: 'Sales Report'
-        };
-        
-      case 'purchases':
-        data = PDFService.filterDataByDate(purchasesData, startDate, endDate);
-        headers = ['Date', 'Item', 'Part Number', 'Quantity', 'Price', 'Total', 'Source'];
-        return {
-          data: data.map(purchase => [
-            formatDateOnly(purchase.date),
-            purchase.name,
-            purchase.partNumber,
-            purchase.quantity,
-            `${formatNumberWithCommas(purchase.price)} Birr`,
-            `${formatNumberWithCommas(purchase.quantity * purchase.price)} Birr`,
-            purchase.source || 'N/A'
-          ]),
-          headers,
-          rawData: data,
-          title: 'Purchases Report'
-        };
-        
-      case 'credits':
-        data = PDFService.filterDataByDate(creditsData, startDate, endDate);
-        headers = ['Date', 'Item', 'Part Number', 'Quantity', 'Price', 'Total', 'Customer', 'Status'];
-        return {
-          data: data.map(credit => [
-            formatDateOnly(credit.date),
-            credit.name,
-            credit.partNumber,
-            credit.quantity,
-            `${formatNumberWithCommas(credit.price)} Birr`,
-            `${formatNumberWithCommas(credit.quantity * credit.price)} Birr`,
-            credit.customer || 'N/A',
-            credit.status || 'Unpaid'
-          ]),
-          headers,
-          rawData: data,
-          title: 'Credit Sales Report'
-        };
-        
-      default:
-        return { data: [], headers: [], rawData: [], title: '' };
-    }
+  // Format report data based on type - Updated for new data structure
+formatReportData: (selectedReportType, salesData, purchasesData, creditsData, inventoryData, startDate, endDate) => {
+  let data = [];
+  let headers = [];
+  let rawData = [];
+  
+  switch (selectedReportType) {
+    case 'sales':
+      rawData = PDFService.filterDataByDate(salesData.map(sale => ({
+        ...sale,
+        date: sale.saleDate // Map saleDate to date for filtering
+      })), startDate, endDate);
+      headers = ['Date', 'Item', 'Quantity', 'Price/Carton', 'Total', 'Customer', 'Status'];
+      return {
+        data: rawData.map(sale => [
+          formatDateOnly(sale.saleDate || sale.date),
+          sale.itemName || 'N/A',
+          `${sale.cartonQuantity || 0} cartons`,
+          `${formatNumberWithCommas(sale.pricePerCarton || 0)} Birr`,
+          `${formatNumberWithCommas((sale.cartonQuantity || 0) * (sale.pricePerCarton || 0))} Birr`,
+          sale.customerName || sale.customer || 'N/A',
+          sale.paymentStatus || 'Completed'
+        ]),
+        headers,
+        rawData,
+        title: 'Sales Report'
+      };
+      
+    case 'purchases':
+      rawData = PDFService.filterDataByDate(purchasesData.map(purchase => ({
+        ...purchase,
+        date: purchase.purchaseDate // Map purchaseDate to date for filtering
+      })), startDate, endDate);
+      headers = ['Date', 'Item', 'Quantity', 'Purchase Price', 'Total', 'Supplier'];
+      return {
+        data: rawData.map(purchase => [
+          formatDateOnly(purchase.purchaseDate || purchase.date),
+          purchase.itemName || 'N/A',
+          `${purchase.cartonQuantity || 0} cartons`,
+          `${formatNumberWithCommas(purchase.purchasePricePerCarton || 0)} Birr`,
+          `${formatNumberWithCommas((purchase.cartonQuantity || 0) * (purchase.purchasePricePerCarton || 0))} Birr`,
+          purchase.supplierName || purchase.supplier || 'N/A'
+        ]),
+        headers,
+        rawData,
+        title: 'Purchases Report'
+      };
+      
+    case 'credits':
+      rawData = PDFService.filterDataByDate(creditsData.map(credit => ({
+        ...credit,
+        date: credit.creditDate // Map creditDate to date for filtering
+      })), startDate, endDate);
+      headers = ['Date', 'Item', 'Quantity', 'Price/Carton', 'Total', 'Customer', 'Status'];
+      return {
+        data: rawData.map(credit => [
+          formatDateOnly(credit.creditDate || credit.date),
+          credit.itemName || 'N/A',
+          `${credit.cartonQuantity || 0} cartons`,
+          `${formatNumberWithCommas(credit.pricePerCarton || 0)} Birr`,
+          `${formatNumberWithCommas((credit.cartonQuantity || 0) * (credit.pricePerCarton || 0))} Birr`,
+          credit.customerName || credit.customer || 'N/A',
+          credit.paymentStatus || 'Unpaid'
+        ]),
+        headers,
+        rawData,
+        title: 'Credit Sales Report'
+      };
+
+    case 'inventory':
+      headers = ['Item', 'Stock', 'Purchase Price', 'Sell Price', 'Total Value', 'Source'];
+      return {
+        data: inventoryData.map(item => [
+          item.itemName || 'N/A',
+          `${item.cartonQuantity || 0} cartons (${item.totalQuantity || 0} pieces)`,
+          `${formatNumberWithCommas(item.purchasePricePerCarton || 0)} Birr`,
+          `${formatNumberWithCommas(item.pricePerCarton || 0)} Birr`,
+          `${formatNumberWithCommas((item.cartonQuantity || 0) * (item.purchasePricePerCarton || 0))} Birr`,
+          item.source || 'N/A'
+        ]),
+        headers,
+        rawData: inventoryData,
+        title: 'Inventory Report'
+      };
+      
+    default:
+      return { data: [], headers: [], rawData: [], title: '' };
   }
+}
 };
 
 export default PDFService;

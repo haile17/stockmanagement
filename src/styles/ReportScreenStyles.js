@@ -194,4 +194,64 @@ export const reportScreenStyles = StyleSheet.create({
   height: 28,
   paddingHorizontal: 0,
 },
+inventorySummary: {
+  backgroundColor: '#f8f9fa',
+  borderRadius: 12,
+  padding: 16,
+  marginVertical: 16,
+  borderWidth: 1,
+  borderColor: '#e9ecef',
+  shadowColor: '#000',
+  shadowOffset: {
+    width: 0,
+    height: 2,
+  },
+  shadowOpacity: 0.1,
+  shadowRadius: 3.84,
+  elevation: 5,
+},
+
+summaryTitle: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  color: '#2c3e50',
+  marginBottom: 12,
+  textAlign: 'center',
+  borderBottomWidth: 1,
+  borderBottomColor: '#dee2e6',
+  paddingBottom: 8,
+},
+
+summaryRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingVertical: 8,
+  paddingHorizontal: 4,
+  borderBottomWidth: 1,
+  borderBottomColor: '#f1f3f4',
+},
+
+summaryLabel: {
+  fontSize: 14,
+  fontWeight: '500',
+  color: '#495057',
+  flex: 1,
+},
+
+summaryValue: {
+  fontSize: 14,
+  fontWeight: 'bold',
+  color: '#2c3e50',
+  textAlign: 'right',
+  minWidth: 80,
+},
+
+lowStockAlert: {
+  color: '#fd7e14', // Orange for low stock warning
+},
+
+outOfStockAlert: {
+  color: '#dc3545', // Red for out of stock
+},
 });

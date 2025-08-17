@@ -274,47 +274,101 @@ class StockAlertManager {
 
   // Send purchase success notification
   sendPurchaseNotification = async (purchase) => {
-    try {
-      const settings = await this.getSettings();
-      if (!settings.enablePurchaseReminders) return;
+  try {
+    const settings = await this.getSettings();
+    if (!settings.enablePurchaseReminders) return;
 
-      await NotificationService.showPurchaseNotification(
-        `✅ Successfully purchased ${purchase.cartonQuantity} cartons of ${purchase.itemName}`,
-        {
-          purchaseId: purchase.id,
-          itemName: purchase.itemName,
-          quantity: purchase.cartonQuantity,
-          amount: purchase.totalAmount,
-        }
-      );
-      
-      console.log(`Purchase notification sent for ${purchase.itemName}`);
-    } catch (error) {
-      console.error('Error sending purchase notification:', error);
-    }
-  };
+    // Use notifee directly instead of NotificationService
+    const notificationId = await notifee.displayNotification({
+      title: 'Purchase Successful',
+      body: `Successfully purchased ${purchase.cartonQuantity} cartons of ${purchase.itemName}`,
+      data: {
+        type: 'purchase_success',
+        purchaseId: purchase.id,
+        itemName: purchase.itemName,
+        quantity: purchase.cartonQuantity,
+        amount: purchase.totalAmount,
+        screen: 'Purchase'
+      },
+      android: {
+        channelId: 'purchases',
+        importance: AndroidImportance.HIGH,
+        pressAction: {
+          id: 'default',
+        },
+        actions: [
+          {
+            title: 'View',
+            pressAction: { id: 'view' },
+          },
+          {
+            title: 'Dismiss',
+            pressAction: { id: 'dismiss' },
+          },
+        ],
+        // No icon properties - use system default
+      },
+      ios: {
+        categoryId: 'default',
+        sound: 'default',
+        badge: 1,
+      },
+    });
+    
+    console.log(`Purchase notification sent for ${purchase.itemName}`);
+  } catch (error) {
+    console.error('Error sending purchase notification:', error);
+  }
+};
 
   // Send sale notification
   sendSaleNotification = async (sale) => {
-    try {
-      const settings = await this.getSettings();
-      if (!settings.enableSaleNotifications) return;
+  try {
+    const settings = await this.getSettings();
+    if (!settings.enableSaleNotifications) return;
 
-      await NotificationService.showSalesNotification(
-        `💰 Sold ${sale.cartonQuantity} cartons of ${sale.itemName} for ${sale.totalAmount} Birr`,
-        {
-          salesId: sale.id,
-          itemName: sale.itemName,
-          quantity: sale.cartonQuantity,
-          amount: sale.totalAmount,
-        }
-      );
-      
-      console.log(`Sale notification sent for ${sale.itemName}`);
-    } catch (error) {
-      console.error('Error sending sale notification:', error);
-    }
-  };
+    // Use notifee directly instead of NotificationService
+    const notificationId = await notifee.displayNotification({
+      title: 'Sale Completed',
+      body: `Sold ${sale.cartonQuantity} cartons of ${sale.itemName} for ${sale.totalAmount} Birr`,
+      data: {
+        type: 'sale_success',
+        salesId: sale.id,
+        itemName: sale.itemName,
+        quantity: sale.cartonQuantity,
+        amount: sale.totalAmount,
+        screen: 'Sales'
+      },
+      android: {
+        channelId: 'sales',
+        importance: AndroidImportance.HIGH,
+        pressAction: {
+          id: 'default',
+        },
+        actions: [
+          {
+            title: 'View',
+            pressAction: { id: 'view' },
+          },
+          {
+            title: 'Dismiss',
+            pressAction: { id: 'dismiss' },
+          },
+        ],
+        // No icon properties - use system default
+      },
+      ios: {
+        categoryId: 'default',
+        sound: 'default',
+        badge: 1,
+      },
+    });
+    
+    console.log(`Sale notification sent for ${sale.itemName}`);
+  } catch (error) {
+    console.error('Error sending sale notification:', error);
+  }
+};
 
   // Get last alert times
   getLastAlertTimes = async () => {

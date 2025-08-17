@@ -17,7 +17,7 @@ import Table from '../components/Table';
 import { reportScreenStyles } from '../styles/ReportScreenStyles';
 import DatePicker from 'react-native-date-picker';
 import { useFocusEffect } from '@react-navigation/native';
-import { formatDate, formatDateOnly } from '../components/utils/formatters';
+import { formatCurrency, formatDate, formatDateOnly, formatNumberWithCommas } from '../components/utils/formatters';
 import { useAlert } from '../context/AlertContext';
 import Button from '../components/Button';
 import ScrollingText from '../components/utils/ScrollingText';
@@ -110,14 +110,14 @@ const ReportScreen = ({ navigation, onToggleDrawer }) => {
   // Get current report data based on selected type and filters - Updated
   const getCurrentReportData = () => {
     return PDFService.formatReportData(
-      selectedReportType,
-      salesData,
-      purchasesData,
-      creditsData,
-      inventoryData, // Pass inventory data
-      startDate,
-      endDate
-    );
+    selectedReportType,
+    salesData,
+    purchasesData,
+    creditsData,
+    inventoryData, // Pass inventory data
+    startDate,
+    endDate
+  );
   };
 
   // Generate PDF report - Enhanced error handling
@@ -238,7 +238,8 @@ const ReportScreen = ({ navigation, onToggleDrawer }) => {
           <Button
             key={type.key}
             title={type.label}
-            type={selectedReportType === type.key ? 'primary' : 'outline'}
+            color={selectedReportType === type.key ? 'primary' : 'secondary'}
+            variant='solid'
             size="small"
             onPress={() => setSelectedReportType(type.key)}
             style={[
@@ -301,7 +302,8 @@ const ReportScreen = ({ navigation, onToggleDrawer }) => {
 
           <Button
             title="Clear"
-            type="outline"
+            color="primary"
+            variant='outline'
             size="small"
             onPress={() => {
               setStartDate('');
@@ -408,12 +410,12 @@ const ReportScreen = ({ navigation, onToggleDrawer }) => {
 
     // Create staggered animations for buttons
     const buttons = [
-      { title: "Share", type: "secondary", onPress: () => handleSharePDF(item.path, item.name) },
-      { title: "WhatsApp", type: "success", onPress: () => handleWhatsAppShare(item.path) },
-      { title: "Telegram", type: "primary", onPress: () => handleTelegramShare(item.path) },
+      { title: "Share", color: "secondary", variant:"solid", onPress: () => handleSharePDF(item.path, item.name) },
+      { title: "WhatsApp", color: "success", variant:"solid", onPress: () => handleWhatsAppShare(item.path) },
+      { title: "Telegram", color: "primary", variant:"solid", onPress: () => handleTelegramShare(item.path) },
       { 
         title: "×", 
-        type: "danger", 
+        color: "danger", 
         onPress: () => {
           showConfirmation(
             'Delete PDF',
@@ -442,8 +444,9 @@ const ReportScreen = ({ navigation, onToggleDrawer }) => {
           {!isExpanded ? (
             <Button
               title="⋮"
-              type="secondary"
-              size="xs"
+              color="secondary"
+              variant='solid'
+              size="medium"
               onPress={() => toggleItemExpansion(item.name)}
               style={[reportScreenStyles.actionButton, reportScreenStyles.menuButton]}
             />
@@ -507,7 +510,7 @@ const ReportScreen = ({ navigation, onToggleDrawer }) => {
                     <Button
                       title={button.title}
                       type={button.type}
-                      size="xs"
+                      size="small"
                       onPress={button.onPress}
                       style={reportScreenStyles.actionButton}
                     />
@@ -551,22 +554,71 @@ const ReportScreen = ({ navigation, onToggleDrawer }) => {
               />
 
               {/* Show summary for inventory reports */}
-              {selectedReportType === 'inventory' && reportData.data.length > 0 && (
+            {selectedReportType === 'inventory' && inventoryData.length > 0 && (
                 <View style={reportScreenStyles.inventorySummary}>
                   <Text style={reportScreenStyles.summaryTitle}>Inventory Summary</Text>
-                  <Text style={reportScreenStyles.summaryText}>
-                    Total Items: {reportData.data.length}
-                  </Text>
-                  <Text style={reportScreenStyles.summaryText}>
-                    Total Stock Value: ${reportData.data.reduce((sum, item) => 
-                      sum + (parseFloat(item.totalAmount) || 0), 0
-                    ).toFixed(2)}
-                  </Text>
-                  <Text style={reportScreenStyles.summaryText}>
-                    Low Stock Items: {reportData.data.filter(item => 
-                      item.minStockAlert && parseInt(item.cartonQuantity) <= parseInt(item.minStockAlert)
-                    ).length}
-                  </Text>
+                  <View style={reportScreenStyles.summaryRow}>
+                    <Text style={reportScreenStyles.summaryLabel}>Total Items:</Text>
+                    <Text style={reportScreenStyles.summaryValue}>
+                      {formatNumberWithCommas(inventoryData.length)}
+                    </Text>
+                  </View>
+                  <View style={reportScreenStyles.summaryRow}>
+                    <Text style={reportScreenStyles.summaryLabel}>Total Stock Value:</Text>
+                    <Text style={reportScreenStyles.summaryValue}>
+                      {formatCurrency(
+                        inventoryData.reduce((sum, item) => {
+                          const itemValue = item.totalAmount || 
+                                          (item.cartonQuantity * item.purchasePricePerCarton) || 0;
+                          return sum + parseFloat(itemValue);
+                        }, 0)
+                      )}
+                    </Text>
+                  </View>
+                  <View style={reportScreenStyles.summaryRow}>
+                    <Text style={reportScreenStyles.summaryLabel}>Total Cartons:</Text>
+                    <Text style={reportScreenStyles.summaryValue}>
+                      {formatNumberWithCommas(
+                        inventoryData.reduce((sum, item) => 
+                          sum + (parseInt(item.cartonQuantity) || 0), 0
+                        )
+                      )}
+                    </Text>
+                  </View>
+                  <View style={reportScreenStyles.summaryRow}>
+                    <Text style={reportScreenStyles.summaryLabel}>Total Pieces:</Text>
+                    <Text style={reportScreenStyles.summaryValue}>
+                      {formatNumberWithCommas(
+                        inventoryData.reduce((sum, item) => 
+                          sum + (parseInt(item.totalQuantity) || 0), 0
+                        )
+                      )}
+                    </Text>
+                  </View>
+                  <View style={reportScreenStyles.summaryRow}>
+                    <Text style={reportScreenStyles.summaryLabel}>Low Stock Items:</Text>
+                    <Text style={[
+                      reportScreenStyles.summaryValue,
+                      reportScreenStyles.lowStockAlert
+                    ]}>
+                      {inventoryData.filter(item => {
+                        const currentStock = parseInt(item.cartonQuantity) || 0;
+                        const minStock = parseInt(item.minStockAlert) || 0;
+                        return minStock > 0 && currentStock <= minStock;
+                      }).length}
+                    </Text>
+                  </View>
+                  <View style={reportScreenStyles.summaryRow}>
+                    <Text style={reportScreenStyles.summaryLabel}>Out of Stock:</Text>
+                    <Text style={[
+                      reportScreenStyles.summaryValue,
+                      reportScreenStyles.outOfStockAlert
+                    ]}>
+                      {inventoryData.filter(item => 
+                        (parseInt(item.cartonQuantity) || 0) === 0
+                      ).length}
+                    </Text>
+                  </View>
                 </View>
               )}
             </View>
@@ -577,8 +629,9 @@ const ReportScreen = ({ navigation, onToggleDrawer }) => {
               
               <Button
                 title={loading ? 'Generating PDF...' : 'Generate PDF Report'}
-                type="gradient"
-                size="large"
+                color='primary'
+                variant='solid'
+                size= 'medium'
                 onPress={generatePDF}
                 disabled={loading}
                 loading={loading}
@@ -596,8 +649,9 @@ const ReportScreen = ({ navigation, onToggleDrawer }) => {
                 </Text>
                 <Button
                   title="Refresh"
-                  type="outline"
-                  size="small"
+                  color='secondary'
+                  variant='outline'
+                  size='small'
                   onPress={async () => {
                     await loadSavedPDFs();
                     showSuccess('Refreshed', `Found ${generatedPDFs.length} PDF files`);
@@ -612,8 +666,9 @@ const ReportScreen = ({ navigation, onToggleDrawer }) => {
                   <Text style={reportScreenStyles.noDataText}>No PDF reports generated yet</Text>
                   <Button
                     title="Debug: Check PDFs"
-                    type="ghost"
-                    size="small"
+                    color='secondary'
+                    variant='outline'
+                    size='medium'
                     onPress={async () => {
                       await loadSavedPDFs();
                       console.log('Current PDFs state:', generatedPDFs);
