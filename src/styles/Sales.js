@@ -166,6 +166,7 @@ const styles = StyleSheet.create({
       borderRadius: 12,
       fontWeight: '600',
       alignSelf: 'flex-start',
+      marginTop: 4,
     },
    saleAmount: {
         fontSize: 16,
